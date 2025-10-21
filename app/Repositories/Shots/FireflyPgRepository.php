@@ -4,7 +4,7 @@ namespace App\Repositories\Shots;
 
 use Illuminate\Support\Facades\DB;
 
-class FireflyPgRepository implements FireflyRepository
+class FireflyPgRepository
 {
     /**
      * Get all asset accounts that have a positive net balance

@@ -1,9 +1,9 @@
 import LayoutShell from '@/components/LayoutShell';
-import { Button, Card } from '@tremor/react';
-import { RiPlayListAddLine } from '@remixicon/react';
-import AccountsTable from '@/components/accounts/AccountsTable';
 import AccountDrawer from '@/components/accounts/AccountDrawer';
+import AccountsTable from '@/components/accounts/AccountsTable';
 import useAccounts from '@/components/accounts/useAccounts';
+import { RiPlayListAddLine } from '@remixicon/react';
+import { Button, Card } from '@tremor/react';
 
 export default function Accounts() {
     const {

@@ -5,7 +5,7 @@ import {
     DrawerFooter,
     DrawerHeader,
     DrawerTitle,
-} from '@/components/drawer';
+} from '@/components/ui/drawer';
 import { Button } from '@tremor/react';
 import { AnimatePresence, motion } from 'framer-motion';
 import React from 'react';
@@ -51,7 +51,11 @@ const AccountDrawer: React.FC<Props> = ({
                             : ''}
                     </div>
 
-                    <span className="text-xs text-zinc-400">{editingAccount?.id && editingAccount.id !== 0 ? `Last Edited ${timeAgo(editingAccount?.lastUpdated)}` : ''}</span>
+                    <span className="text-xs text-zinc-400">
+                        {editingAccount?.id && editingAccount.id !== 0
+                            ? `Last Edited ${timeAgo(editingAccount?.lastUpdated)}`
+                            : ''}
+                    </span>
                 </DrawerTitle>
             </DrawerHeader>
 

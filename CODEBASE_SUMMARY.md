@@ -38,7 +38,7 @@ This document provides a concise yet comprehensive, project-aware summary of all
   - __construct(string $date, float $usd, float $ngn, float $unifiedNGN, float $transactions, float $change): Initializes a single-day summary with USD/NGN totals, unified NGN value (usd*sell+ngn), transactions sum in NGN, and net change.
 
 
-### App\Http\Controllers\AccountsController — app/Http/Controllers/AccountsController.php
+### App\Http\Controllers\Shots\AccountsController — app/Http/Controllers/AccountsController.php
 - Summary: API controller for listing, updating, and creating Firefly accounts while merging Fireshots metadata (currency, fee) and syncing changes to the Firefly API when needed.
 - Methods:
   - public function __construct(protected AccountRepository $repo, protected FireflyApiService $firefly): Injects the repositories/services used by endpoints.
@@ -126,7 +126,7 @@ This document provides a concise yet comprehensive, project-aware summary of all
   - public function register(): void — Binds App\Repositories\Shots\FireflyRepository to App\Repositories\Shots\FireflyPgRepository in the service container.
 
 
-### App\Repositories\AccountRepository — app/Repositories/AccountRepository.php
+### App\Repositories\Shots\AccountRepository — app/Repositories/AccountRepository.php
 - Summary: Repository for merging Firefly core account data with Fireshots metadata; also manages metadata persistence.
 - Methods:
   - protected function getAccountTypeId(string $typeName): ?int — Looks up account_types.id by case/space-insensitive name match using a raw SQL expression.

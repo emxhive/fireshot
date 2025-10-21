@@ -2,13 +2,13 @@
 
 namespace App\Providers;
 
+use App\Repositories\Shots\{FireflyApiRepository, FireflyRepository};
 use Illuminate\Support\ServiceProvider;
-use App\Repositories\Shots\{FireflyRepository, FireflyPgRepository};
 
 class ShotsServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        $this->app->bind(FireflyRepository::class, FireflyPgRepository::class);
+        $this->app->bind(FireflyRepository::class, FireflyApiRepository::class);
     }
 }

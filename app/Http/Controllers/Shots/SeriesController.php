@@ -11,7 +11,7 @@ use App\DTOs\Shots\SeriesPointData;
 
 class SeriesController extends Controller
 {
-    public function __construct(private ComputeService $compute) {}
+    public function __construct(private readonly ComputeService $compute) {}
 
     public function index(Request $request)
     {
