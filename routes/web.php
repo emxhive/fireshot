@@ -4,16 +4,12 @@ use App\Http\Controllers\DashboardController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
-Route::get('/', function () {
-    return Inertia::render('welcome');
-})->name('home');
+Route::get('/', fn() => redirect()->route('dashboard'));
 
-Route::get('dashboard', DashboardController::class)->name('dashboard');
+Route::get('/dashboard', [DashboardController::class, '__invoke'])
+    ->name('dashboard');
 
-Route::fallback(function () {
-    return redirect()->route('dashboard');
-});
+Route::get('/accounts', fn() => Inertia::render('accounts'))
+    ->name('accounts');
 
-Route::get('accounts', function () {
-    return Inertia::render('accounts');
-})->name('accounts');
+Route::fallback(fn() => redirect()->route('dashboard'));

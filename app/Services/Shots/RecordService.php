@@ -2,15 +2,13 @@
 
 namespace App\Services\Shots;
 
+use App\Support\Shots\CacheKeys;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
 class RecordService
 {
-    private const CACHE_KEY = 'fireshots.records';
-    private const CACHE_TTL = 31536000; // 1 year in seconds
-
     /**
      * Update record highs and lows from a set of computed summaries.
      *
@@ -19,7 +17,7 @@ class RecordService
      */
     public function updateFromSummaries(array $summaries, string $granularity): void
     {
-        $records = Cache::get(self::CACHE_KEY, []);
+        $records = Cache::get(CacheKeys::RECORDS, []);
 
         foreach ($summaries as $row) {
             $period = $row['period'] ?? null;
@@ -37,7 +35,7 @@ class RecordService
             $this->trackScoped($records, 'valuation_delta', $granularity, $row['valuation_delta'], $period);
         }
 
-        Cache::put(self::CACHE_KEY, $records, self::CACHE_TTL);
+        Cache::put(CacheKeys::RECORDS, $records, CacheKeys::RECORDS_TTL);
         Log::info('[RecordService] Records updated.', ['granularity' => $granularity]);
     }
 
@@ -46,7 +44,7 @@ class RecordService
      */
     public function getAll(): array
     {
-        return Cache::get(self::CACHE_KEY, []);
+        return Cache::get(CacheKeys::RECORDS, []);
     }
 
     /**
@@ -54,7 +52,7 @@ class RecordService
      */
     public function reset(): void
     {
-        Cache::forget(self::CACHE_KEY);
+        Cache::forget(CacheKeys::RECORDS);
     }
 
     /* ---------------------------------------------------------------------

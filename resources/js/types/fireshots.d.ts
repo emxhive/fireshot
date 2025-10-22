@@ -1,67 +1,75 @@
-// resources/js/types/fireshots.d.ts
-export type PortfolioField = 'Change' | 'Balance' | 'Transactions';
+// Unified Fireshots type definitions
 
-export interface SnapshotSummary {
-    date: string;
+export type Granularity = 'day' | 'week' | 'month';
+export type KpiField = 'Balance' | 'Change' | 'Transactions';
+
+export interface SummaryRow {
+    period: string;
     usd: number;
     ngn: number;
-    unifiedNGN: number;
+    net_asset_value: number;
     transactions: number;
-    change: number;
+    flow_adjusted_value: number;
+    valuation_delta: number;
 }
 
-export interface SeriesPoint {
-    period: string;
-    Transactions: number;
-    Change: number;
-    Balance: number;
+export interface SummaryResponse {
+    status: 'success' | 'error';
+    granularity: Granularity;
+    count: number;
+    data: SummaryRow[];
 }
 
-// Shape coming from RecordService::get()
-export interface ShotsRecords {
-    balance: {
-        high: { value: number | null; date: string | null };
-        low: { value: number | null; date: string | null };
-    };
-    change: {
-        week: {
-            high: { value: number | null; period: string | null };
-            low: { value: number | null; period: string | null };
-        };
-        month: {
-            high: { value: number | null; period: string | null };
-            low: { value: number | null; period: string | null };
-        };
+export interface RecordValue {
+    value: number;
+    date?: string;
+    period?: string;
+}
+
+export interface RecordMetric {
+    high?: RecordValue;
+    low?: RecordValue;
+}
+
+export interface RecordData {
+    net_asset_value: RecordMetric;
+    valuation_delta: {
+        month: RecordMetric;
+        week: RecordMetric;
     };
     transactions: {
-        week: {
-            high: { value: number | null; period: string | null };
-            low: { value: number | null; period: string | null };
-        };
-        month: {
-            high: { value: number | null; period: string | null };
-            low: { value: number | null; period: string | null };
-        };
+        month: RecordMetric;
     };
 }
 
-export interface DashboardPageProps {
-    summaries: SnapshotSummary[];
-    seriesMonth: SeriesPoint[];
-    seriesWeek: SeriesPoint[];
-    records: ShotsRecords;
-    [key: string]: any;
+export interface RecordResponse {
+    status: 'success' | 'error';
+    count: number;
+    data: RecordData;
 }
 
-export interface KpiCardData {
-    name: PortfolioField;
-    value: string;
-    change: number;
-    percentageChange: string;
-    changeType: 'positive' | 'negative';
-    chartData: { date: string; value: number }[];
-    breakdown?: { name: string; value: number; percentageValue: number }[];
-    categories?: string[];
-    values?: number[];
-    colors?: string[];
+/* ---------------------------------------------------------------------------
+   Component Prop Types
+--------------------------------------------------------------------------- */
+export interface KpiCardDataSet {
+    value: number;
+    spark: { date: string; value: number }[];
+}
+
+export interface KpiCardProps {
+    field: KpiField;
+    data: KpiCardDataSet;
+    records: RecordData;
+}
+
+export interface SnapshotTableProps {
+    data: SummaryRow[];
+    loading?: boolean;
+    onSnapshotRun?: () => void;
+}
+
+export interface CompositionChartProps {
+    weekly: SummaryRow[];
+    monthly: SummaryRow[];
+    loading?: boolean;
 }

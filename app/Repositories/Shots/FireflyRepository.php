@@ -10,4 +10,7 @@ interface FireflyRepository
 
     public function getPeriodTransactions(string $granularity = 'month', int $limit = 12): array;
 
+    public function getPositiveBalancesForDate(string $date): array;
+
+
 }

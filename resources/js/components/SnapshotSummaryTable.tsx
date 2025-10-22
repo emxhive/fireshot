@@ -1,50 +1,28 @@
-import { runSnapshot } from '@/lib/api';
-import { formatNGN, formatUSD } from '@/lib/format';
-import type { DashboardPageProps, SnapshotSummary } from '@/types/fireshots.d';
-import { router, usePage } from '@inertiajs/react';
-import {
-    Button,
-    Card,
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeaderCell,
-    TableRow,
-    Text,
-} from '@tremor/react';
-import { useMemo, useState } from 'react';
-import SnapshotDialog from './SnapshotDialog';
+'use client'
 
-export default function SnapshotSummaryTable() {
-    const [open, setOpen] = useState(false);
-    const [sellRate, setSellRate] = useState('');
-    const [buyDiff, setBuyDiff] = useState('25');
-    const [snapshotDate, setSnapshotDate] = useState<Date>(new Date());
+import { useState } from 'react'
+import { Button, Card, Table, TableBody, TableCell, TableHead, TableHeaderCell, TableRow, Text } from '@tremor/react'
+import SnapshotDialog from './SnapshotDialog'
+import { formatNGN, formatUSD } from '@/lib/format'
+import { runSnapshot } from '@/lib/api'
+import type { SnapshotTableProps } from '@/types/fireshots'
 
-    const { props } = usePage<DashboardPageProps>();
-    const data = useMemo<SnapshotSummary[]>(() => {
-        const p = props as any as DashboardPageProps;
-        return p.summaries ?? [];
-    }, [props]);
+export default function SnapshotSummaryTable({ data, loading, onSnapshotRun }: SnapshotTableProps) {
+    const [open, setOpen] = useState(false)
+    const [sellRate, setSellRate] = useState('')
+    const [buyDiff, setBuyDiff] = useState('25')
+    const [snapshotDate, setSnapshotDate] = useState<Date>(new Date())
 
-    const loading = false;
-
-    // --- Handle snapshot trigger ---
     const handleConfirm = async () => {
         const payload = {
             snapshot_date: snapshotDate.toISOString().split('T')[0],
             sell_rate: parseFloat(sellRate),
             buy_diff: buyDiff ? parseFloat(buyDiff) : 25,
-        };
-
-        await runSnapshot(payload);
-        // Refresh only relevant props on the page
-        router.reload({
-            only: ['summaries', 'seriesMonth', 'seriesWeek', 'records'],
-        });
-        setOpen(false);
-    };
+        }
+        await runSnapshot(payload)
+        setOpen(false)
+        onSnapshotRun?.()
+    }
 
     return (
         <Card className="p-6">
@@ -71,25 +49,21 @@ export default function SnapshotSummaryTable() {
                 <TableHead>
                     <TableRow className="border-b border-tremor-border dark:border-dark-tremor-border">
                         <TableHeaderCell>Date</TableHeaderCell>
-                        <TableHeaderCell className="text-right">
-                            USD
-                        </TableHeaderCell>
-                        <TableHeaderCell className="text-right">
-                            NGN
-                        </TableHeaderCell>
-                        <TableHeaderCell className="text-right">
-                            Unified (NGN)
-                        </TableHeaderCell>
-                        <TableHeaderCell className="text-right">
-                            Transactions
-                        </TableHeaderCell>
-                        <TableHeaderCell className="text-right">
-                            Change
-                        </TableHeaderCell>
+                        <TableHeaderCell className="text-right">USD</TableHeaderCell>
+                        <TableHeaderCell className="text-right">NGN</TableHeaderCell>
+                        <TableHeaderCell className="text-right">Unified (NGN)</TableHeaderCell>
+                        <TableHeaderCell className="text-right">Transactions</TableHeaderCell>
+                        <TableHeaderCell className="text-right">Change</TableHeaderCell>
                     </TableRow>
                 </TableHead>
                 <TableBody>
-                    {data.length === 0 ? (
+                    {loading ? (
+                        <TableRow>
+                            <TableCell colSpan={6} className="text-center">
+                                <Text>Loading...</Text>
+                            </TableCell>
+                        </TableRow>
+                    ) : data.length === 0 ? (
                         <TableRow>
                             <TableCell colSpan={6} className="text-center">
                                 <Text>No snapshots found.</Text>
@@ -97,26 +71,18 @@ export default function SnapshotSummaryTable() {
                         </TableRow>
                     ) : (
                         data.map((s) => (
-                            <TableRow key={s.date}>
+                            <TableRow key={s.period}>
                                 <TableCell className="font-medium text-tremor-content-strong dark:text-dark-tremor-content-strong">
-                                    {s.date}
+                                    {s.period}
                                 </TableCell>
-                                <TableCell className="text-right">
-                                    {formatUSD(s.usd)}
-                                </TableCell>
-                                <TableCell className="text-right">
-                                    {formatNGN(s.ngn)}
-                                </TableCell>
-                                <TableCell className="text-right">
-                                    {formatNGN(s.unifiedNGN)}
-                                </TableCell>
-                                <TableCell className="text-right">
-                                    {formatNGN(s.transactions)}
-                                </TableCell>
+                                <TableCell className="text-right">{formatUSD(s.usd)}</TableCell>
+                                <TableCell className="text-right">{formatNGN(s.ngn)}</TableCell>
+                                <TableCell className="text-right">{formatNGN(s.net_asset_value)}</TableCell>
+                                <TableCell className="text-right">{formatNGN(s.transactions)}</TableCell>
                                 <TableCell
-                                    className={`text-right ${s.change >= 0 ? 'text-emerald-700 dark:text-emerald-500' : 'text-red-700 dark:text-red-500'}`}
+                                    className={`text-right ${s.valuation_delta >= 0 ? 'text-emerald-700 dark:text-emerald-500' : 'text-red-700 dark:text-red-500'}`}
                                 >
-                                    {formatNGN(s.change)}
+                                    {formatNGN(s.valuation_delta)}
                                 </TableCell>
                             </TableRow>
                         ))
@@ -124,7 +90,6 @@ export default function SnapshotSummaryTable() {
                 </TableBody>
             </Table>
 
-            {/* Dialog */}
             <SnapshotDialog
                 open={open}
                 onClose={setOpen}
@@ -137,5 +102,5 @@ export default function SnapshotSummaryTable() {
                 onConfirm={handleConfirm}
             />
         </Card>
-    );
+    )
 }

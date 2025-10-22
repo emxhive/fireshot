@@ -67,14 +67,6 @@ class FireflyApiService
         ]);
     }
 
-    /* -------------------------------------------------
-     | Firefly endpoints
-     * ------------------------------------------------*/
-
-    public function getAccounts(): ?array
-    {
-        return $this->get('accounts');
-    }
 
     public function getAccount(int $id): ?array
     {

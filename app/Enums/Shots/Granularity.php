@@ -2,6 +2,8 @@
 
 namespace App\Enums\Shots;
 
+use DateTimeInterface;
+
 enum Granularity: string
 {
     case Day = 'day';
@@ -12,22 +14,20 @@ enum Granularity: string
     {
         return match ($g) {
             self::Day   => 30,
-            self::Week  => 6,
-            self::Month => 6,
+            self::Week, self::Month => 6,
         };
     }
 
     public static function fromString(string $value): self
     {
         return match (strtolower($value)) {
-            'day'   => self::Day,
             'week'  => self::Week,
             'month' => self::Month,
             default => self::Day,
         };
     }
 
-    public static function periodKey(self $g, string|\DateTimeInterface $date): string
+    public static function periodKey(self $g, string|DateTimeInterface $date): string
     {
         $ts = is_string($date) ? strtotime($date) : $date->getTimestamp();
         return match ($g) {

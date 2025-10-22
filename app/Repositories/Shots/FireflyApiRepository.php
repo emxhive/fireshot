@@ -4,6 +4,7 @@ namespace App\Repositories\Shots;
 
 use App\Enums\Shots\AccountRole;
 use App\Enums\Shots\Granularity;
+use App\Support\Shots\CacheKeys;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Factory;
 use Illuminate\Http\Client\PendingRequest;
@@ -72,7 +73,7 @@ class FireflyApiRepository implements FireflyRepository
     {
         $this->ensureSixMonthCacheFresh();
 
-        $all = Cache::get('firefly.tx.kw', []);
+        $all = Cache::get(CacheKeys::FIREFLY_KW_TX, []);
 
         // filter by date window
         return array_values(array_filter($all, fn($tx) => ($tx['date'] ?? null) >= $start && ($tx['date'] ?? null) <= $end
@@ -87,7 +88,7 @@ class FireflyApiRepository implements FireflyRepository
     public function getPeriodTransactions(string $granularity = 'month', int $limit = 12): array
     {
         $this->ensureSixMonthCacheFresh();
-        $data = Cache::get('firefly.tx.kw', []);
+        $data = Cache::get(CacheKeys::FIREFLY_KW_TX, []);
 
         if (empty($data)) {
             Log::warning('[FireflyApiRepository] No cached KW transactions for aggregation.');
@@ -115,27 +116,46 @@ class FireflyApiRepository implements FireflyRepository
             ->all();
     }
 
+
+    /**
+     * Return positive balances for snapshot input date.
+     * Note: Firefly API does not expose historical balances per arbitrary date;
+     *       we use current balances as the snapshot source of truth.
+     * @throws ConnectionException
+     */
+    public function getPositiveBalancesForDate(string $date): array
+    {
+
+        $accounts = $this->getAccounts();
+
+        // Normalize to the structure SnapshotService expects
+        $mapped = array_map(function (array $a) {
+            return [
+                'account_id' => (int)($a['id'] ?? 0),
+                'currency_code' => (string)($a['currency_code'] ?? 'NGN'),
+                'balance_raw' => (float)($a['balance'] ?? 0.0),
+            ];
+        }, $accounts);
+
+        // Keep strictly positive balances
+        return array_values(array_filter($mapped, fn($r) => ($r['balance_raw'] ?? 0) > 0));
+    }
+
     public function ensureSixMonthCacheFresh(): void
     {
-        $key = 'firefly.tx.kw';
-        $metaKey = "$key.meta";
+        $key = CacheKeys::FIREFLY_KW_TX;
+        $metaKey = CacheKeys::FIREFLY_KW_TX_META;
 
         $data = Cache::get($key, []);
         $meta = Cache::get($metaKey);
         $expired = !$meta || now()->diffInHours($meta['timestamp']) >= 24;
 
         if ($expired || empty($data)) {
-            $lock = Cache::lock('lock:firefly.tx.kw.refresh', 60);
+            $lock = Cache::lock(CacheKeys::FIREFLY_KW_LOCK_REFRESH, 300);
 
             if ($lock->get()) {
                 try {
                     $data = $this->seedSixMonthCache();
-
-                    // Retry once if still empty
-                    if (empty($data)) {
-                        Log::warning('[FireflyApiRepository] First fetch empty, retrying once...');
-                        $data = $this->seedSixMonthCache();
-                    }
 
                     if (empty($data)) {
                         Log::warning('[FireflyApiRepository] No KW transactions found after retry.');
@@ -156,8 +176,8 @@ class FireflyApiRepository implements FireflyRepository
      */
     public function seedSixMonthCache(): array
     {
-        $key = 'firefly.tx.kw';
-        $metaKey = "$key.meta";
+        $key = CacheKeys::FIREFLY_KW_TX;
+        $metaKey = CacheKeys::FIREFLY_KW_TX_META;
 
         // Step 1: find a KW account
         $search = $this->client()->get('/search/accounts', [

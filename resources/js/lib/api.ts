@@ -1,6 +1,6 @@
 import { create, index, update } from '@/routes/shots/accounts';
 
-import type { SeriesPoint, SnapshotSummary } from '@/types/fireshots.d';
+
 import { callApi } from './apiFactory';
 
 export async function fetchAccounts(): Promise<FetchAccountsResponse> {
@@ -21,26 +21,7 @@ export async function createAccount(
     return callApi<typeof payload, SaveAccountResponse>(create.post(), payload);
 }
 
-export async function fetchSummaries() {
-    return callApi<undefined, SnapshotSummary[]>({
-        url: '/api/shots/summaries',
-        method: 'get',
-    });
-}
 
-export async function fetchSeries(granularity: 'month' | 'week') {
-    return callApi<undefined, SeriesPoint[]>({
-        url: `/api/shots/series?granularity=${granularity}`,
-        method: 'get',
-    });
-}
-
-export async function fetchRecords() {
-    return callApi<undefined, any>({
-        url: '/api/shots/records',
-        method: 'get',
-    });
-}
 
 export async function runSnapshot(payload: {
     snapshot_date: string;

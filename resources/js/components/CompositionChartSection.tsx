@@ -1,33 +1,28 @@
-'use client';
+'use client'
 
-import { formatNGN } from '@/lib/format';
-import type { DashboardPageProps, PortfolioField, SeriesPoint } from '@/types/fireshots.d';
-import { Card, LineChart, Select, SelectItem, Text } from '@tremor/react';
-import { useMemo, useState } from 'react';
-import { usePage } from '@inertiajs/react';
+import { Card, LineChart, Select, SelectItem, Text } from '@tremor/react'
+import { formatNGN } from '@/lib/format'
+import { useState, useMemo } from 'react'
+import type { CompositionChartProps } from '@/types/fireshots'
 
-function computeStats(series: SeriesPoint[], field: PortfolioField) {
-    const values = series.map((p) => p[field]);
-    const sum = values.reduce((a, b) => a + b, 0);
-    const avg = values.length ? sum / values.length : 0;
-    const min = values.length ? Math.min(...values) : 0;
-    const max = values.length ? Math.max(...values) : 0;
-    return { avg, min, max };
-}
+export default function CompositionChartSection({ weekly, monthly, loading }: CompositionChartProps) {
+    const [granularity, setGranularity] = useState<'months' | 'weeks'>('months')
+    const [portfolioField, setPortfolioField] = useState<'Balance' | 'Change' | 'Transactions'>('Change')
 
-export default function CompositionChartSection() {
-    const [granularity, setGranularity] = useState<'months' | 'weeks'>('months');
-    const [portfolioField, setPortfolioField] = useState<PortfolioField>('Change');
-    const { props } = usePage<DashboardPageProps>();
+    const series = useMemo(() => {
+        const base = granularity === 'months' ? monthly : weekly
+        return base.map((p) => ({
+            period: p.period,
+            Balance: p.net_asset_value,
+            Change: p.valuation_delta,
+            Transactions: p.transactions,
+        }))
+    }, [granularity, weekly, monthly])
 
-    const series: SeriesPoint[] = useMemo(() => {
-        const p = props as any as DashboardPageProps;
-        return granularity === 'months' ? p.seriesMonth ?? [] : p.seriesWeek ?? [];
-    }, [props, granularity]);
-
-    const categories: Array<PortfolioField> = ['Transactions', 'Change', 'Balance'];
-
-    const { avg, min, max } = computeStats(series, portfolioField);
+    const values = series.map((p) => p[portfolioField])
+    const avg = values.length ? values.reduce((a, b) => a + b, 0) / values.length : 0
+    const min = values.length ? Math.min(...values) : 0
+    const max = values.length ? Math.max(...values) : 0
 
     return (
         <Card className="mt-4 p-4">
@@ -39,8 +34,8 @@ export default function CompositionChartSection() {
                     <Select
                         className="w-40 [&>button]:rounded-tremor-small"
                         enableClear={false}
-                        defaultValue={granularity}
-                        onValueChange={(v) => setGranularity((v as 'months' | 'weeks') ?? 'months')}
+                        value={granularity}
+                        onValueChange={(v) => setGranularity((v as any) ?? 'months')}
                     >
                         <SelectItem value="months">Last 12 months</SelectItem>
                         <SelectItem value="weeks">Last 12 weeks</SelectItem>
@@ -48,8 +43,8 @@ export default function CompositionChartSection() {
                     <Select
                         className="w-44 [&>button]:rounded-tremor-small"
                         enableClear={false}
-                        defaultValue={portfolioField}
-                        onValueChange={(v) => setPortfolioField((v as PortfolioField) ?? 'Change')}
+                        value={portfolioField}
+                        onValueChange={(v) => setPortfolioField((v as any) ?? 'Change')}
                     >
                         <SelectItem value="Change">Portfolio: Change</SelectItem>
                         <SelectItem value="Transactions">Portfolio: Transactions</SelectItem>
@@ -58,7 +53,9 @@ export default function CompositionChartSection() {
                 </div>
             </div>
 
-            {series.length === 0 ? (
+            {loading ? (
+                <Text className="mt-6 text-tremor-content">Loading...</Text>
+            ) : series.length === 0 ? (
                 <Text className="mt-6 text-tremor-content">No data.</Text>
             ) : (
                 <>
@@ -72,12 +69,12 @@ export default function CompositionChartSection() {
                         className="mt-6 h-96"
                         data={series}
                         index="period"
-                        categories={categories}
+                        categories={['Balance', 'Change', 'Transactions']}
                         valueFormatter={formatNGN}
                         yAxisWidth={68}
                     />
                 </>
             )}
         </Card>
-    );
+    )
 }

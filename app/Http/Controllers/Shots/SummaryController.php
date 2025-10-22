@@ -3,38 +3,51 @@
 namespace App\Http\Controllers\Shots;
 
 use App\Services\Shots\ComputeService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
-use Illuminate\Support\Facades\Cache;
-use App\DTOs\Shots\SnapshotSummaryData;
+use Illuminate\Validation\ValidationException;
+use Throwable;
 
-class SummaryController extends Controller
+final class SummaryController extends Controller
 {
-    public function __construct(private ComputeService $compute) {}
+    public function __construct(private readonly ComputeService $compute) {}
 
-    public function index()
+    /**
+     * GET /api/shots/summaries?granularity=day|week|month&limit=30
+     */
+    public function index(Request $request): JsonResponse
     {
-        return Cache::remember('shots.summaries', 86400, fn() =>
-            $this->compute->getDailySummaries(30)
-        );
-    }
+        try {
+            $validated = $request->validate([
+                'granularity' => 'nullable|string|in:day,week,month',
+                'limit'       => 'nullable|integer|min:1|max:90',
+            ]);
 
-    public function show(Request $request): SnapshotSummaryData
-    {
-        $date = $request->validate([
-            'snapshot_date' => ['required', 'date_format:Y-m-d'],
-        ])['snapshot_date'];
+            $granularity = $validated['granularity'] ?? 'day';
+            $limit       = $validated['limit'] ?? null;
 
-        $summaries = Cache::remember('shots.summaries', 86400, fn() =>
-            $this->compute->getDailySummaries(30)
-        );
-
-        $summary = $summaries->first(fn($dto) => $dto->date === $date);
-
-        if (!$summary) {
-            abort(404, 'Snapshot not found');
+            $data = $this->compute->getSummaries($granularity, $limit);
+            debug($data);
+            return response()->json([
+                'status'      => 'success',
+                'granularity' => $granularity,
+                'count'       => count($data),
+                'data'        => $data,
+            ]);
+        } catch (ValidationException $e) {
+            return response()->json([
+                'status' => 'error',
+                'error'  => 'Invalid parameters',
+                'details' => $e->errors(),
+            ], 422);
+        } catch (Throwable $e) {
+            report($e);
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Failed to fetch summaries',
+                'details' => $e->getMessage(),
+            ], 500);
         }
-
-        return $summary;
     }
 }

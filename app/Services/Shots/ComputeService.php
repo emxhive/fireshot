@@ -65,7 +65,7 @@ readonly class ComputeService
         }
 
         app(RecordService::class)->updateFromSummaries($out, $g->value);
-        return $out;
+        return array_reverse($out);
     }
 
     /* ---------- Helpers ---------- */
@@ -103,6 +103,8 @@ readonly class ComputeService
         if ($headers->isEmpty()) {
             return [];
         }
+
+        // Group headers by period key
         $grouped = collect($headers)->groupBy(function ($h) use ($periodType) {
             $dt = Carbon::parse($h->snapshot_date);
             return match ($periodType) {
@@ -112,34 +114,60 @@ readonly class ComputeService
             };
         });
 
+        // Sort chronologically and trim to limit (keep most recent N)
         $periodKeys = $grouped->keys()->sort()->values();
         if ($periodKeys->count() > $limit) {
             $periodKeys = $periodKeys->slice(-$limit);
         }
 
+        // Pick the LAST header inside each period
+        $lastHeaders = $periodKeys
+            ->map(fn($key) => optional($grouped[$key]->sortBy('snapshot_date'))->last())
+            ->filter()
+            ->values();
+
+        if ($lastHeaders->isEmpty()) {
+            return [];
+        }
+
+        // **Batch** pull all balances just once for the selected "last header" set
+        $balances = BalanceSnapshot::select('header_id', 'currency_code', DB::raw('SUM(balance_raw) AS total'))
+            ->whereIn('header_id', $lastHeaders->pluck('id'))
+            ->groupBy('header_id', 'currency_code')
+            ->get()
+            ->groupBy('header_id');
+
+        // Build result using the preloaded bucket per header
         $result = [];
         foreach ($periodKeys as $key) {
-            $list = $grouped[$key]->sortBy('snapshot_date');
-            $last = $list->last();
+            $last = optional($grouped[$key]->sortBy('snapshot_date'))->last();
             if (!$last) {
                 continue;
             }
-
-            $bucket = BalanceSnapshot::select('currency_code', DB::raw('SUM(balance_raw) AS total'))
-                ->where('header_id', $last->id)
-                ->groupBy('currency_code')
-                ->get();
-
+            $bucket = $balances->get($last->id, collect());
             $result = $this->addNavEntry($bucket, $last, $result, $key);
         }
+
         return $result;
     }
 
     private function orderPeriods(array $keys): array
     {
-        sort($keys, SORT_STRING);
+        usort($keys, function (string $a, string $b) {
+
+            if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $a)) {        // day
+                return strcmp($a, $b);                            // ISO-safe
+            }
+            if (preg_match('/^\d{4}-W\d{2}$/', $a)) {             // ISO week
+                [$ya, $wa] = [intval(substr($a, 0, 4)), intval(substr($a, 6, 2))];
+                [$yb, $wb] = [intval(substr($b, 0, 4)), intval(substr($b, 6, 2))];
+                return $ya <=> $yb ?: $wa <=> $wb;
+            }
+            return strcmp($a, $b);
+        });
         return $keys;
     }
+
 
     /** Extracted shared logic for NAV calculation. */
     private function addNavEntry($bucket, $header, array $result, string $key): array
