@@ -25,4 +25,21 @@ export default defineConfig({
     esbuild: {
         jsx: 'automatic',
     },
+
+    server: {
+        host: '192.168.0.188',
+        cors: true,  // ✅ so you can access from other devices on LAN/
+        watch: {
+            ignored: [
+                '**/node_modules/**',  // heavy, never needed
+                '**/vendor/**',        // Laravel PHP deps
+                '**/storage/**',       // logs, cache
+                '**/bootstrap/cache/**',
+                '**/.git/**',
+                '**/public/**',
+                '**/.vscode/**',
+                '**/.idea/**',
+            ],
+        },
+    },
 });
