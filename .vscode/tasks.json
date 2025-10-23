@@ -1,0 +1,15 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "🔁 Toggle Lock",
+      "type": "process",
+      "command": "/data/data/com.termux/files/usr/bin/bash",
+      "args": [
+        "-c",
+        "grep -q '\"files.readonlyInclude\": {}' .vscode/settings.json 2>/dev/null && echo '{\"files.readonlyInclude\": {\"**/app/**\": true, \"**/resources/js/**\": true, \"**/routes/**\": true}}' > .vscode/settings.json || echo '{\"files.readonlyInclude\": {}}' > .vscode/settings.json"
+      ],
+      "problemMatcher": []
+    }
+  ]
+}
