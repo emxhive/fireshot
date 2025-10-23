@@ -1,54 +1,89 @@
-import { formatCompactNumber } from '@/lib/format';
-import type { KpiCardProps } from '@/types/fireshots';
-import { Card, Metric, ProgressBar, SparkAreaChart, Text } from '@tremor/react';
+// 'use client';
 
-export default function KpiCard({ field, data, records }: KpiCardProps) {
-    const metricVal = data?.value ?? 0;
-    const sparkData = data?.spark ?? [];
-    const recPath =
-        field === 'Balance'
-            ? records?.net_asset_value
-            : field === 'Change'
-              ? records?.valuation_delta?.month
-              : records?.transactions?.month;
+import { Card, SparkAreaChart } from '@tremor/react';
 
-    const high = recPath?.high?.value ?? 0;
-    const low = recPath?.low?.value ?? 0;
-    const { highPct, lowPct } = toProgress(high, low);
-    const changeType: 'positive' | 'negative' =
-        metricVal >= 0 ? 'positive' : 'negative';
-
-    return (
-        <Card className="overflow-hidden">
-            <Text className="text-[0.9rem] font-semibold text-tremor-content-strong dark:text-dark-tremor-content-strong">
-                {field}
-            </Text>
-
-            <div className="mt-1 flex items-baseline justify-between overflow-hidden">
-                <Metric className="flex-shrink-0 truncate text-[1.5rem] font-bold text-tremor-content-strong sm:text-[1.75rem] dark:text-dark-tremor-content-strong">
-                    {formatCompactNumber(metricVal)}
-                </Metric>
-            </div>
-            <div className="flex min-w-0 flex-1 items-center space-x-2">
-                <SparkAreaChart
-                    data={sparkData}
-                    index="date"
-                    categories={['value']}
-                    showGradient
-                    colors={changeType === 'positive' ? ['emerald'] : ['rose']}
-                    className="h-8 w-20 flex-shrink sm:h-10 sm:w-32"
-                />
-            </div>
-            {/* progress bar */}
-            <ProgressBar value={highPct} color="emerald" />
-        </Card>
-    );
+function classNames(...classes: string[]) {
+  return classes.filter(Boolean).join(' ');
 }
 
-function toProgress(high: number, low: number) {
-    if (!high || high <= 0) return { highPct: 0, lowPct: 0 };
-    return {
-        highPct: 100,
-        lowPct: Math.max(0, Math.min(100, (low / high) * 100)),
-    };
+export default function KpiCard({ field, data, period, records }: KpiCardProps) {
+  // pick correct high value based on field + period
+  const high =
+    field === 'Balance'
+      ? records?.net_asset_value?.high?.value ?? 0
+      : field === 'Change'
+      ? period === '7d'
+        ? records?.valuation_delta?.week?.high?.value ?? 0
+        : records?.valuation_delta?.month?.high?.value ?? 0
+      : period === '7d'
+      ? records?.transactions?.week?.high?.value ?? 0
+      : records?.transactions?.month?.high?.value ?? 0;
+
+  const value = data?.value ?? 0;
+  const sparkData = data?.spark ?? [];
+
+  const delta = high - value;
+  const pct = value !== 0 ? ((delta / value) * 100).toFixed(1) + '%' : '0%';
+  const changeType: 'positive' | 'negative' = delta >= 0 ? 'positive' : 'negative';
+
+  const summary = [
+    {
+      name: field,
+      tickerSymbol: period.toUpperCase(),
+      value: value.toLocaleString(undefined, { maximumFractionDigits: 2 }),
+      change: (delta >= 0 ? '+' : '') + delta.toFixed(2),
+      percentageChange: pct,
+      changeType,
+    },
+  ];
+
+  return (
+    <>
+      <dl className="grid grid-cols-1 gap-6">
+        {summary.map((item) => (
+          <Card key={item.name}>
+            <dt className="text-tremor-default font-medium text-tremor-content-strong dark:text-dark-tremor-content-strong">
+              {item.name} <span className="font-normal">({item.tickerSymbol})</span>
+            </dt>
+
+            <div className="mt-1 flex items-baseline justify-between">
+              <dd
+                className={classNames(
+                  item.changeType === 'positive'
+                    ? 'text-emerald-700 dark:text-emerald-500'
+                    : 'text-red-700 dark:text-red-500',
+                  'text-tremor-title font-semibold',
+                )}
+              >
+                {item.value}
+              </dd>
+              <dd className="flex items-center space-x-1 text-tremor-default">
+                <span className="font-medium text-tremor-content-strong dark:text-dark-tremor-content-strong">
+                  {item.change}
+                </span>
+                <span
+                  className={classNames(
+                    item.changeType === 'positive'
+                      ? 'text-emerald-700 dark:text-emerald-500'
+                      : 'text-red-700 dark:text-red-500',
+                  )}
+                >
+                  ({item.percentageChange})
+                </span>
+              </dd>
+            </div>
+
+            <SparkAreaChart
+              data={sparkData}
+              index="date"
+              categories={['value']}
+              showGradient={false}
+              colors={item.changeType === 'positive' ? ['emerald'] : ['red']}
+              className="mt-4 h-10 w-full"
+            />
+          </Card>
+        ))}
+      </dl>
+    </>
+  );
 }

@@ -8,7 +8,7 @@ import LayoutShell from '../components/LayoutShell';
 import SnapshotSummaryTable from '../components/SnapshotSummaryTable';
 
 export default function Dashboard() {
-    const [period, setPeriod] = useState<'7d' | '4w' | '6m'>('7d');
+    const [period, setPeriod] = useState<PeriodOptions>('7d');
     const { data: day30 = [], isLoading: dayLoading } = useFireshotsSummaries(
         'day',
         30,
@@ -113,6 +113,7 @@ export default function Dashboard() {
                                 {Object.entries(kpiData).map(
                                     ([field, data]) => (
                                         <KpiCard
+                                            period ={period}
                                             key={field}
                                             field={field as KpiField}
                                             data={data}
