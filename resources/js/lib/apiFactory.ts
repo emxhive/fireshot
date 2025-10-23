@@ -1,35 +1,30 @@
-// apiFactory.ts
+import api from './axiosClient'
 
-import type { RouteDefinition } from '@/wayfinder';
-import api from './axiosClient';
+export interface APICallDefinition {
+    url: string
+    method: 'get' | 'post' | 'put' | 'delete'
+}
 
 export async function callApi<P, R>(
-    route: RouteDefinition<'get' | 'post'>,
+    route: APICallDefinition,
     payload?: P,
 ): Promise<R | APIErrorResponse> {
     try {
-        const method = route.method;
-        let response;
+        const { method, url } = route
+        let response
 
         if (method === 'get') {
-            response = await api.get<R>(route.url);
-            console.log(response, 'response');
+            response = await api.get<R>(url)
         } else {
-            response = await api.post<R>(route.url, payload);
+            response = await api[method]<R>(url, payload)
         }
 
-        return response.data as R;
+        return response.data as R
     } catch (error: any) {
-        console.error(
-            `${route.method.toUpperCase()} ${route.url} failed:`,
-            error.response?.data || error.message,
-        );
+        console.error(`${route.method.toUpperCase()} ${route.url} failed:`, error.response?.data || error.message)
         return {
             status: 'error',
-            message:
-                error.response?.data?.message ||
-                error.message ||
-                'API call failed',
-        };
+            message: error.response?.data?.message || error.message || 'API call failed',
+        } as any
     }
 }

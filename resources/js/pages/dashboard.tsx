@@ -1,6 +1,5 @@
 import { ContentPlaceholder } from '@/components/ContentPlaceholder';
 import { useFireshotsRecords, useFireshotsSummaries } from '@/hooks';
-import type { KpiField, SummaryRow } from '@/types/fireshots';
 import { Card, Grid, Select, SelectItem } from '@tremor/react';
 import { useMemo, useState } from 'react';
 import CompositionChartSection from '../components/CompositionChartSection';
@@ -10,25 +9,20 @@ import SnapshotSummaryTable from '../components/SnapshotSummaryTable';
 
 export default function Dashboard() {
     const [period, setPeriod] = useState<'7d' | '4w' | '6m'>('7d');
-
-    // fetch once per granularity
-    const { data: day30, loading: dayLoading } = useFireshotsSummaries(
+    const { data: day30 = [], isLoading: dayLoading } = useFireshotsSummaries(
         'day',
         30,
     );
-    const { data: week12, loading: weekLoading } = useFireshotsSummaries(
+    const { data: week12 = [], isLoading: weekLoading } = useFireshotsSummaries(
         'week',
         12,
     );
-    const { data: month12, loading: monthLoading } = useFireshotsSummaries(
-        'month',
-        12,
-    );
-    const { data: records, loading: recLoading } = useFireshotsRecords();
-
+    const { data: month12 = [], isLoading: monthLoading } =
+        useFireshotsSummaries('month', 12);
+    const { data: records } = useFireshotsRecords();
     console.log(records, 'records');
 
-    const isLoading = dayLoading || weekLoading || monthLoading || recLoading;
+    const isLoading = dayLoading || weekLoading || monthLoading;
 
     // decide which slice KPI uses based on select
     const kpiSlice: SummaryRow[] = useMemo(() => {
