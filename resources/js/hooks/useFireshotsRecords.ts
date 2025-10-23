@@ -1,33 +1,16 @@
-import { useEffect, useState } from 'react'
-import type { RecordResponse, RecordData } from '@/types/fireshots'
+import { useQuery } from '@tanstack/react-query'
+import type { RecordData, RecordResponse } from '@/types/fireshots'
 
-/**
- * Hook: Fetch Fireshots record data (highs/lows)
- *
- * @param reloadKey optional key to trigger refetch
- */
-export function useFireshotsRecords(reloadKey?: number) {
-    const [data, setData] = useState<RecordData | null>(null)
-    const [loading, setLoading] = useState(true)
-    const [error, setError] = useState<string | null>(null)
-
-    useEffect(() => {
-        const controller = new AbortController()
-        setLoading(true)
-
-        fetch('/api/shots/records', { signal: controller.signal })
-            .then(async (res) => {
-                if (!res.ok) throw new Error(await res.text())
-                return (await res.json()) as RecordResponse
-            })
-            .then((json) => setData(json.data || null))
-            .catch((err) => {
-                if (err.name !== 'AbortError') setError(err.message)
-            })
-            .finally(() => setLoading(false))
-
-        return () => controller.abort()
-    }, [reloadKey])
-
-    return { data, loading, error }
+export function useFireshotsRecords() {
+    return useQuery<RecordData | null, Error>({
+        queryKey: ['fireshots', 'records'],
+        queryFn: async () => {
+            const res = await fetch('/api/shots/records')
+            if (!res.ok) throw new Error(await res.text())
+            const json: RecordResponse = await res.json()
+            return json.data ?? null
+        },
+        staleTime: 1000 * 60 * 10, // 10 minutes cache
+        refetchOnWindowFocus: false,
+    })
 }

@@ -3,8 +3,8 @@ import React from 'react';
 import { cx } from '@/lib/utils';
 
 export default function LayoutShell({
-                                        children,
-                                    }: {
+    children,
+}: {
     children: React.ReactNode;
 }) {
     const { url } = usePage();
@@ -22,23 +22,20 @@ export default function LayoutShell({
     );
 
     return (
-        <div className="bg-tremor-background-muted dark:bg-dark-tremor-background-muted min-h-screen flex justify-center py-6 sm:py-8 lg:py-10 overflow-hidden no-scrollbar">
+        <div className="no-scrollbar flex min-h-screen justify-center overflow-hidden bg-tremor-background-muted py-6 sm:py-8 lg:py-10 dark:bg-dark-tremor-background-muted">
             {/* Card effect only at xl and above */}
-            <div
-                className="
-                    w-full
-                    max-w-7xl
-                    bg-white dark:bg-dark-tremor-background
-                    xl:rounded-2xl xl:shadow-lg xl:border xl:border-tremor-border dark:xl:border-dark-tremor-border
-                    xl:overflow-hidden
-                "
-            >
+            <div className="w-full max-w-7xl bg-white xl:overflow-hidden xl:rounded-2xl xl:border xl:border-tremor-border xl:shadow-lg dark:bg-dark-tremor-background dark:xl:border-dark-tremor-border">
                 {/* NAV */}
-                <div className="border-b border-tremor-border dark:border-dark-tremor-border bg-white dark:bg-dark-tremor-background">
+                <div className="border-b border-tremor-border bg-white dark:border-dark-tremor-border dark:bg-dark-tremor-background">
                     <div className="px-4 sm:px-6 lg:px-8">
                         <div className="flex h-16 sm:space-x-7">
                             <div className="hidden shrink-0 sm:flex sm:items-center">
-                                <Link href="/dashboard" className="p-1.5">
+                                <Link
+                                    href="/dashboard"
+                                    className="p-1.5"
+                                    preserveScroll
+                                    preserveState
+                                >
                                     <Logo
                                         className="size-5 shrink-0 text-tremor-content-strong dark:text-dark-tremor-content-strong"
                                         aria-hidden={true}
@@ -52,6 +49,8 @@ export default function LayoutShell({
                             >
                                 {navigation.map((item) => (
                                     <Link
+                                        preserveScroll
+                                        preserveState
                                         key={item.name}
                                         href={item.href}
                                         className={cx(

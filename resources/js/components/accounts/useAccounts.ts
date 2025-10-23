@@ -1,18 +1,17 @@
+import {
+    ApiAccount,
+    useAccountsQuery,
+    useCreateAccountMutation,
+    useUpdateAccountMutation,
+} from '@/hooks/useAccountsQuery';
 import { useCallback, useEffect, useState } from 'react';
-import { createAccount, fetchAccounts, updateAccount } from '@/lib/api';
-
-export interface Account {
-    id: number;
-    name: string;
-    currency: string;
-    fee: number;
-    balance: number;
-    lastUpdated: string;
-}
 
 export default function useAccounts() {
+    const { data, isFetching, refetch } = useAccountsQuery();
+    const updateAccount = useUpdateAccountMutation();
+    const createAccount = useCreateAccountMutation();
+
     const [accounts, setAccounts] = useState<Account[]>([]);
-    const [isLoading, setIsLoading] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
     const [rowSelection, setRowSelection] = useState({});
     const [editQueue, setEditQueue] = useState<Account[]>([]);
@@ -26,39 +25,24 @@ export default function useAccounts() {
     } | null>(null);
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
-    /* ---------------------------- Fetch all accounts ---------------------------- */
-    const loadAccounts = useCallback(async () => {
-        setIsLoading(true);
-        try {
-            const res = await fetchAccounts();
-            if (res.status === 'success') {
-                const data: Account[] = res.accounts.map((a: any) => ({
+    /* --------------------------- sync query data --------------------------- */
+    useEffect(() => {
+        if (data?.status === 'success' && Array.isArray(data.accounts)) {
+            const mapped: Account[] = (data.accounts as ApiAccount[]).map(
+                (a) => ({
                     id: a.id,
                     name: a.name,
-                    currency: a.currency_code || '',
+                    currency: a.currency_code,
                     fee: a.fee_percent ?? 0,
                     balance: a.balance ?? 0,
                     lastUpdated: a.updated_at,
-                }));
-                setAccounts(data);
-            } else {
-                setCallout({
-                    type: 'error',
-                    message: res.message || 'Failed to load accounts',
-                });
-            }
-        } catch (e) {
-            setCallout({ type: 'error', message: 'Could not fetch accounts.' });
-        } finally {
-            setIsLoading(false);
+                }),
+            );
+            setAccounts(mapped);
         }
-    }, []);
+    }, [data]);
 
-    useEffect(() => {
-        loadAccounts().then(r => console.log(r) );
-    }, [loadAccounts]);
-
-    /* -------------------------- Drawer + Queue Logic --------------------------- */
+    /* -------------------------- Drawer + Queue Logic -------------------------- */
     const openForEdit = useCallback(
         (account?: Account, selectedAccounts: Account[] = []) => {
             const multiple = selectedAccounts.length > 1;
@@ -66,7 +50,7 @@ export default function useAccounts() {
                 setEditQueue(selectedAccounts);
                 setQueueIndex(0);
                 setEditingAccount(selectedAccounts[0]);
-                setCurrentFormData(selectedAccounts[0]); // ✅ show first account in queue
+                setCurrentFormData(selectedAccounts[0]);
             } else if (account) {
                 setEditQueue([]);
                 setQueueIndex(0);
@@ -83,53 +67,50 @@ export default function useAccounts() {
         [],
     );
 
-    /* ------------------------------ Queue control ----------------------------- */
     const moveToNextAccount = useCallback(() => {
         if (editQueue.length > 1) {
             const nextIndex = queueIndex + 1;
             if (nextIndex < editQueue.length) {
-                setQueueIndex(nextIndex);
                 const nextAcc = editQueue[nextIndex];
+                setQueueIndex(nextIndex);
                 setEditingAccount(nextAcc);
-                setCurrentFormData(nextAcc); // ✅ update form
+                setCurrentFormData(nextAcc);
             } else {
-                // finished queue
                 setIsDrawerOpen(false);
                 setEditQueue([]);
             }
-        } else {
-            setIsDrawerOpen(false);
-        }
+        } else setIsDrawerOpen(false);
     }, [editQueue, queueIndex]);
 
     const handleSave = useCallback(async () => {
         if (!currentFormData) return;
-
         const payload = {
             name: currentFormData.name,
             currency: currentFormData.currency,
             fee: currentFormData.fee,
             balance: currentFormData.balance,
         };
-
         setIsSaving(true);
-
         try {
-            let res;
-            if (currentFormData.id && currentFormData.id !== 0)
-                res = await updateAccount(currentFormData.id, payload);
-            else res = await createAccount(payload);
+            if (currentFormData.id && currentFormData.id !== 0) {
+                await updateAccount.mutateAsync({
+                    accountId: currentFormData.id,
+                    payload,
+                });
+            } else {
+                await createAccount.mutateAsync(payload);
+            }
 
-            if (res.status !== 'success') throw new Error(res.message || 'Save failed');
+            await refetch(); // refresh accounts after save
 
-            await loadAccounts();
-
-            // ✅ remove the saved account from the queue
+            // queue continuation
             if (editQueue.length > 0 && currentFormData.id) {
-                const remaining = editQueue.filter((a) => a.id !== currentFormData.id);
-
+                const remaining = editQueue.filter(
+                    (a) => a.id !== currentFormData.id,
+                );
                 if (remaining.length > 0) {
-                    const nextIndex = queueIndex >= remaining.length ? 0 : queueIndex;
+                    const nextIndex =
+                        queueIndex >= remaining.length ? 0 : queueIndex;
                     const nextAcc = remaining[nextIndex];
                     setEditQueue(remaining);
                     setQueueIndex(nextIndex);
@@ -139,21 +120,23 @@ export default function useAccounts() {
                     setEditQueue([]);
                     setIsDrawerOpen(false);
                 }
-            } else {
-                // single edit or create
-                setIsDrawerOpen(false);
-            }
-        } catch (e) {
+            } else setIsDrawerOpen(false);
+        } catch (e: any) {
             console.error(e);
-
+            setCallout({ type: 'error', message: e.message || 'Save failed' });
         } finally {
             setIsSaving(false);
         }
-    }, [currentFormData, editQueue, queueIndex, loadAccounts]);
+    }, [
+        currentFormData,
+        editQueue,
+        queueIndex,
+        refetch,
+        updateAccount,
+        createAccount,
+    ]);
 
     const openForAdd = useCallback(() => {
-        setEditQueue([]);
-        setQueueIndex(0);
         const newAcct: Account = {
             id: 0,
             name: '',
@@ -162,24 +145,26 @@ export default function useAccounts() {
             balance: 0,
             lastUpdated: new Date().toISOString(),
         };
+        setEditQueue([]);
+        setQueueIndex(0);
         setEditingAccount(newAcct);
         setCurrentFormData(newAcct);
         setIsDrawerOpen(true);
     }, []);
 
     const updateFormData = useCallback((key: keyof Account, value: any) => {
-        setCurrentFormData((prev) => ({ ...(prev as Account), [key]: value }));
+        setCurrentFormData((prev: any) => ({
+            ...(prev as Account),
+            [key]: value,
+        }));
     }, []);
 
     return {
         accounts,
-        rowSelection,
-        setRowSelection,
-        isLoading,
+        isLoading: isFetching,
         isSaving,
         callout,
         setCallout,
-        loadAccounts,
         openForEdit,
         openForAdd,
         moveToNextAccount,
@@ -191,5 +176,7 @@ export default function useAccounts() {
         setIsDrawerOpen,
         queueIndex,
         editQueue,
+        rowSelection,
+        setRowSelection,
     };
 }

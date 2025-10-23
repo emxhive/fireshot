@@ -10,7 +10,7 @@ import { Button } from '@tremor/react';
 import { AnimatePresence, motion } from 'framer-motion';
 import React from 'react';
 import AccountForm from './AccountForm';
-import { Account } from './useAccounts';
+
 import { timeAgo } from '@/lib/utils';
 
 interface Props {

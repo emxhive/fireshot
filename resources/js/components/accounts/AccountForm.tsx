@@ -1,6 +1,6 @@
 import { NumberInput, Select, SelectItem, TextInput } from '@tremor/react';
 import React from 'react';
-import { Account } from './useAccounts';
+
 
 interface Props {
   data: Partial<Account> | null;

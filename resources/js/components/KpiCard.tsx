@@ -5,9 +5,6 @@ import { Card, Metric, ProgressBar, SparkAreaChart, Text } from '@tremor/react';
 export default function KpiCard({ field, data, records }: KpiCardProps) {
     const metricVal = data?.value ?? 0;
     const sparkData = data?.spark ?? [];
-
-
-    console.log(sparkData, 'sparkData');
     const recPath =
         field === 'Balance'
             ? records?.net_asset_value
@@ -31,34 +28,19 @@ export default function KpiCard({ field, data, records }: KpiCardProps) {
                 <Metric className="flex-shrink-0 truncate text-[1.5rem] font-bold text-tremor-content-strong sm:text-[1.75rem] dark:text-dark-tremor-content-strong">
                     {formatCompactNumber(metricVal)}
                 </Metric>
-
-                <div className="flex min-w-0 flex-1 items-center justify-end space-x-2">
-                    <SparkAreaChart
-                        data={sparkData}
-                        index="date"
-                        categories={['value']}
-                        showGradient
-                        colors={
-                            changeType === 'positive' ? ['emerald'] : ['rose']
-                        }
-                        className="h-8 w-20 flex-shrink sm:h-10 sm:w-32"
-                    />
-                </div>
             </div>
-
-            {/* progress bars */}
-            <div className="mt-4 space-y-2">
-                <div className="flex justify-between text-tremor-default">
-                    <Text>High</Text>
-                    <Text>{formatCompactNumber(high)}</Text>
-                </div>
-                <ProgressBar value={highPct} color="emerald" />
-                <div className="mt-2 flex justify-between text-tremor-default">
-                    <Text>Low</Text>
-                    <Text>{formatCompactNumber(low)}</Text>
-                </div>
-                <ProgressBar value={lowPct} color="rose" />
+            <div className="flex min-w-0 flex-1 items-center space-x-2">
+                <SparkAreaChart
+                    data={sparkData}
+                    index="date"
+                    categories={['value']}
+                    showGradient
+                    colors={changeType === 'positive' ? ['emerald'] : ['rose']}
+                    className="h-8 w-20 flex-shrink sm:h-10 sm:w-32"
+                />
             </div>
+            {/* progress bar */}
+            <ProgressBar value={highPct} color="emerald" />
         </Card>
     );
 }
