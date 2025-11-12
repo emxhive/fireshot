@@ -17,9 +17,9 @@ export default function CompositionChartSection({
     const series = useMemo(() => {
         const base = granularity === 'months' ? monthly : weekly;
         return base.map((p) => ({
-            period: p.period,
-            Balance: p.net_asset_value,
-            Change: p.valuation_delta,
+            period: `${p.from} → ${p.to}`,
+            Balance: p.netAssetValue,
+            Change: p.valuationDelta,
             Transactions: p.transactions,
         }));
     }, [granularity, weekly, monthly]);

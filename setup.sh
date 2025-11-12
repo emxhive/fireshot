@@ -18,13 +18,13 @@ cat > "$TYPES_DIR/fireshots.d.ts" <<'EOF'
 export type Granularity = 'day' | 'week' | 'month'
 
 export interface SummaryRow {
-  period: string
+  from: string
+  to: string
   usd: number
   ngn: number
-  net_asset_value: number
+  netAssetValue: number
+  valuationDelta: number
   transactions: number
-  flow_adjusted_value: number
-  valuation_delta: number
 }
 
 export interface SummaryResponse {

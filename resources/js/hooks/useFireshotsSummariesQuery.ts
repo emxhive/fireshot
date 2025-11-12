@@ -1,16 +1,19 @@
 import { getSummaries } from '@/lib/api';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 
-export function useFireshotsSummariesQuery(
-    granularity: Granularity,
-    limit?: number,
-) {
+type SummarySuccessResponse = SummaryResponse & { status: 'success' };
+type SummaryErrorResponse = { status: 'error'; message: string };
+
+export function useFireshotsSummariesQuery(limit?: number) {
     return useQuery<SummaryRow[]>({
-        queryKey: ['summaries', granularity, limit],
+        queryKey: ['summaries', limit],
         queryFn: async () => {
-            const res = await getSummaries(granularity, limit);
+            const res = (await getSummaries(
+                limit,
+            )) as SummarySuccessResponse | SummaryErrorResponse;
+
             if (res.status !== 'success') throw new Error(res.message);
-            return res.data as SummaryRow[];
+            return res.data;
         },
         placeholderData: keepPreviousData,
     });

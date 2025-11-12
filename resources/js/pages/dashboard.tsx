@@ -1,6 +1,6 @@
 import { ContentPlaceholder } from '@/components/ContentPlaceholder';
 import { useFireshotsRecordsQuery } from '@/hooks/useFireshotsRecordsQuery';
-import { useFireshotsSummariesQuery } from '@/hooks/useFireshotsSummariesQuery';
+import { useAggregatedSummaries } from '@/hooks/useAggregatedSummaries';
 import { Card, Grid, Select, SelectItem } from '@tremor/react';
 import { useMemo, useState } from 'react';
 import CompositionChartSection from '../components/CompositionChartSection';
@@ -11,9 +11,18 @@ import SnapshotSummaryTable from '../components/SnapshotSummaryTable';
 export default function Dashboard() {
     const [period, setPeriod] = useState<KpiPeriodOptions>('7d');
 
-    const { data: day30 = [], isLoading: dayLoading } = useFireshotsSummariesQuery('day', 30);
-    const { data: week12 = [], isLoading: weekLoading } = useFireshotsSummariesQuery('week', 12);
-    const { data: month12 = [], isLoading: monthLoading } = useFireshotsSummariesQuery('month', 12);
+    const { summaries: day30, isLoading: dayLoading } = useAggregatedSummaries(
+        'day',
+        30,
+    );
+    const { summaries: week12, isLoading: weekLoading } = useAggregatedSummaries(
+        'week',
+        84,
+    );
+    const { summaries: month12, isLoading: monthLoading } = useAggregatedSummaries(
+        'month',
+        365,
+    );
     const { data: records, isLoading: recLoading } = useFireshotsRecordsQuery();
 
     const isLoading = dayLoading || weekLoading || monthLoading || recLoading;
@@ -32,21 +41,22 @@ export default function Dashboard() {
 
     const totalTx = kpiSlice.reduce((sum, s) => sum + (s.transactions || 0), 0);
 
-    const balanceVal = latest?.net_asset_value ?? 0;
+    const balanceVal = latest?.netAssetValue ?? 0;
     const txVal = totalTx;
-    const changeVal = (latest?.net_asset_value ?? 0) - (oldest?.net_asset_value ?? 0) - totalTx;
+    const changeVal =
+        (latest?.netAssetValue ?? 0) - (oldest?.netAssetValue ?? 0) - totalTx;
 
     const sparkData = {
         Balance: [...kpiSlice].map((s) => ({
-            date: s.period,
-            value: s.net_asset_value,
+            date: `${s.from} → ${s.to}`,
+            value: s.netAssetValue,
         })),
         Change: [...kpiSlice].map((s) => ({
-            date: s.period,
-            value: s.valuation_delta,
+            date: `${s.from} → ${s.to}`,
+            value: s.valuationDelta,
         })),
         Transactions: [...kpiSlice].map((s) => ({
-            date: s.period,
+            date: `${s.from} → ${s.to}`,
             value: s.transactions,
         })),
     };
