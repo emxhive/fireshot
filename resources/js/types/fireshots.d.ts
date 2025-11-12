@@ -15,13 +15,13 @@ interface Account {
 }
 
 interface SummaryRow {
-    period: string;
+    from: string;
+    to: string;
     usd: number;
     ngn: number;
-    net_asset_value: number;
+    netAssetValue: number;
+    valuationDelta: number;
     transactions: number;
-    flow_adjusted_value: number;
-    valuation_delta: number;
 }
 
 interface SummaryResponse {

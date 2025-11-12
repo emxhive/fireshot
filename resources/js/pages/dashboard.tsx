@@ -32,21 +32,22 @@ export default function Dashboard() {
 
     const totalTx = kpiSlice.reduce((sum, s) => sum + (s.transactions || 0), 0);
 
-    const balanceVal = latest?.net_asset_value ?? 0;
+    const balanceVal = latest?.netAssetValue ?? 0;
     const txVal = totalTx;
-    const changeVal = (latest?.net_asset_value ?? 0) - (oldest?.net_asset_value ?? 0) - totalTx;
+    const changeVal =
+        (latest?.netAssetValue ?? 0) - (oldest?.netAssetValue ?? 0) - totalTx;
 
     const sparkData = {
         Balance: [...kpiSlice].map((s) => ({
-            date: s.period,
-            value: s.net_asset_value,
+            date: `${s.from} → ${s.to}`,
+            value: s.netAssetValue,
         })),
         Change: [...kpiSlice].map((s) => ({
-            date: s.period,
-            value: s.valuation_delta,
+            date: `${s.from} → ${s.to}`,
+            value: s.valuationDelta,
         })),
         Transactions: [...kpiSlice].map((s) => ({
-            date: s.period,
+            date: `${s.from} → ${s.to}`,
             value: s.transactions,
         })),
     };

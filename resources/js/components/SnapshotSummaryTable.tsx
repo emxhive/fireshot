@@ -67,22 +67,29 @@ export default function SnapshotSummaryTable({ data, loading, onSnapshotRun }: S
                             </TableCell>
                         </TableRow>
                     ) : (
-                        data.map((s) => (
-                            <TableRow key={s.period}>
-                                <TableCell className="font-medium text-tremor-content-strong dark:text-dark-tremor-content-strong">{s.period}</TableCell>
-                                <TableCell className="text-right">{formatUSD(s.usd)}</TableCell>
-                                <TableCell className="text-right">{formatNGN(s.ngn)}</TableCell>
-                                <TableCell className="text-right">{formatNGN(s.net_asset_value)}</TableCell>
-                                <TableCell className="text-right">{formatNGN(s.transactions)}</TableCell>
-                                <TableCell
-                                    className={`text-right ${
-                                        s.valuation_delta >= 0 ? 'text-emerald-700 dark:text-emerald-500' : 'text-red-700 dark:text-red-500'
-                                    }`}
-                                >
-                                    {formatNGN(s.valuation_delta)}
-                                </TableCell>
-                            </TableRow>
-                        ))
+                        data.map((s) => {
+                            const periodLabel = `${s.from} → ${s.to}`;
+                            return (
+                                <TableRow key={periodLabel}>
+                                    <TableCell className="font-medium text-tremor-content-strong dark:text-dark-tremor-content-strong">
+                                        {periodLabel}
+                                    </TableCell>
+                                    <TableCell className="text-right">{formatUSD(s.usd)}</TableCell>
+                                    <TableCell className="text-right">{formatNGN(s.ngn)}</TableCell>
+                                    <TableCell className="text-right">{formatNGN(s.netAssetValue)}</TableCell>
+                                    <TableCell className="text-right">{formatNGN(s.transactions)}</TableCell>
+                                    <TableCell
+                                        className={`text-right ${
+                                            s.valuationDelta >= 0
+                                                ? 'text-emerald-700 dark:text-emerald-500'
+                                                : 'text-red-700 dark:text-red-500'
+                                        }`}
+                                    >
+                                        {formatNGN(s.valuationDelta)}
+                                    </TableCell>
+                                </TableRow>
+                            );
+                        })
                     )}
                 </TableBody>
             </Table>
