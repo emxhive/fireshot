@@ -17,10 +17,9 @@ async function handle<R>(promise: Promise<R>): Promise<R | { status: 'error'; me
 }
 
 /** DASHBOARD */
-export async function getSummaries(granularity: string, limit?: number) {
-    const params = new URLSearchParams({ granularity });
-    if (limit) params.append('limit', String(limit));
-    return handle(api.get(`/api/shots/summaries?${params}`).then((r) => r.data));
+export async function getSummaries(limit?: number) {
+    const query = limit ? `?limit=${limit}` : '';
+    return handle(api.get(`/api/shots/summaries${query}`).then((r) => r.data));
 }
 
 export async function getRecords() {

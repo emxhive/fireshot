@@ -4,15 +4,11 @@ import { keepPreviousData, useQuery } from '@tanstack/react-query';
 type SummarySuccessResponse = SummaryResponse & { status: 'success' };
 type SummaryErrorResponse = { status: 'error'; message: string };
 
-export function useFireshotsSummariesQuery(
-    granularity: Granularity,
-    limit?: number,
-) {
+export function useFireshotsSummariesQuery(limit?: number) {
     return useQuery<SummaryRow[]>({
-        queryKey: ['summaries', granularity, limit],
+        queryKey: ['summaries', limit],
         queryFn: async () => {
             const res = (await getSummaries(
-                granularity,
                 limit,
             )) as SummarySuccessResponse | SummaryErrorResponse;
 

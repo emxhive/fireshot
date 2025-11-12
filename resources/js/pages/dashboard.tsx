@@ -1,6 +1,6 @@
 import { ContentPlaceholder } from '@/components/ContentPlaceholder';
 import { useFireshotsRecordsQuery } from '@/hooks/useFireshotsRecordsQuery';
-import { useFireshotsSummariesQuery } from '@/hooks/useFireshotsSummariesQuery';
+import { useAggregatedSummaries } from '@/hooks/useAggregatedSummaries';
 import { Card, Grid, Select, SelectItem } from '@tremor/react';
 import { useMemo, useState } from 'react';
 import CompositionChartSection from '../components/CompositionChartSection';
@@ -11,9 +11,18 @@ import SnapshotSummaryTable from '../components/SnapshotSummaryTable';
 export default function Dashboard() {
     const [period, setPeriod] = useState<KpiPeriodOptions>('7d');
 
-    const { data: day30 = [], isLoading: dayLoading } = useFireshotsSummariesQuery('day', 30);
-    const { data: week12 = [], isLoading: weekLoading } = useFireshotsSummariesQuery('week', 12);
-    const { data: month12 = [], isLoading: monthLoading } = useFireshotsSummariesQuery('month', 12);
+    const { summaries: day30, isLoading: dayLoading } = useAggregatedSummaries(
+        'day',
+        30,
+    );
+    const { summaries: week12, isLoading: weekLoading } = useAggregatedSummaries(
+        'week',
+        84,
+    );
+    const { summaries: month12, isLoading: monthLoading } = useAggregatedSummaries(
+        'month',
+        365,
+    );
     const { data: records, isLoading: recLoading } = useFireshotsRecordsQuery();
 
     const isLoading = dayLoading || weekLoading || monthLoading || recLoading;
