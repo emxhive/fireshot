@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Domain\Snapshots\DTOs\SnapshotSummaryData;
 use App\Domain\Snapshots\Services\SnapshotComputationService;
 use App\Domain\Snapshots\Services\SnapshotService;
 use App\Shared\ApiResponse;
+use App\Shared\Enums\Granularity;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -21,9 +21,18 @@ final readonly class SnapshotsController
 
     public function summaries(Request $request)
     {
-        $limit = (int)$request->query('limit', 12);
-        $snapshots = $this->compute->getIntervalSummaries($limit);
-        return ApiResponse::success($snapshots);
+        $granularity = $request->query('granularity', 'day');
+        $limit = $request->integer('limit');
+
+        $g = Granularity::fromString($granularity);
+        $limit = $limit && $limit > 0 ? $limit : null;
+
+        $summaries = $this->compute->getIntervalSummaries($g->value, $limit);
+
+        return ApiResponse::success(
+            $summaries,
+            'Snapshot summaries retrieved successfully.'
+        );
     }
 
     /**
