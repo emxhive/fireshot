@@ -1,22 +1,15 @@
 import LayoutShell from '@/components/LayoutShell';
-import { useCacheClearMutation } from '@/hooks/useCacheMaintenance';
 import useToast from '@/hooks/useToast';
+import { runTransactionRefresh } from '@/lib/api';
+import { useMutation } from '@tanstack/react-query';
 import { Button, Callout, Card, Text, Title } from '@tremor/react';
 
 export default function Settings() {
     const { toast, show } = useToast();
 
-    const analytics = useCacheClearMutation('analytics');
-    const transactions = useCacheClearMutation('transactions');
-    const records = useCacheClearMutation('records');
+    const mutation = useMutation(runTransactionRefresh);
 
     const cacheBlocks = [
-        {
-            title: 'Analytics Cache',
-            desc: 'Clears computed summaries and valuation deltas. Safe for reloading analytics without touching Firefly data.',
-            scope: 'analytics',
-            hook: analytics,
-        },
         {
             title: 'Transactions Cache',
             desc: 'Clears cached Firefly KW transaction data. Use if backend transactions were recently updated.',
@@ -34,12 +27,6 @@ export default function Settings() {
                     Manage Fireshots maintenance and caching layers safely.
                 </Text>
             </header>
-
-            {toast && (
-                <Callout title={toast.kind === 'success' ? 'Done' : 'Error'} color={toast.kind === 'success' ? 'teal' : 'rose'}>
-                    {toast.text}
-                </Callout>
-            )}
 
             {cacheBlocks.map(({ title, desc, hook, scope }) => (
                 <Card key={scope} className="flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">
@@ -61,6 +48,12 @@ export default function Settings() {
                     </Button>
                 </Card>
             ))}
+
+            {toast && (
+                <Callout title={toast.kind === 'success' ? 'Done' : 'Error'} color={toast.kind === 'success' ? 'teal' : 'rose'}>
+                    {toast.text}
+                </Callout>
+            )}
         </div>
     );
 }
