@@ -24,3 +24,11 @@ Accept: application/json
 ### 1️⃣ Fetch summaries
 GET {{baseUrl}}/api/shots/summaries
 Accept: application/json
+
+
+
+### 1️⃣ Fetch Accounts
+GET {{baseUrl}}/api/shots/accounts
+Accept: application/json
+
+
