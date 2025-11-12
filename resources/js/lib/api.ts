@@ -41,10 +41,9 @@ export async function createAccount(payload: Record<string, any>) {
 }
 
 export async function updateAccount(id: number, payload: Record<string, any>) {
-    return handle(api.post(`/api/shots/accounts/${id}`, payload).then((r) => r.data));
+    return handle(api.put(`/api/shots/accounts/${id}`, payload).then((r) => r.data));
 }
 
-/** CACHE MAINTENANCE */
-export async function clearCache(scope: string) {
-    return handle(api.get(`/api/shots/cache?scope=${scope}`).then((r) => r.data));
+export async function runTransactionRefresh() {
+    return handle(api.post('/api/shots/transactions/refresh').then((r) => r.data));
 }
