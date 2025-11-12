@@ -2,9 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Domain\Snapshots\DTOs\SnapshotSummaryData;
 use App\Domain\Snapshots\Services\SnapshotComputationService;
 use App\Domain\Snapshots\Services\SnapshotService;
-use App\Domain\Snapshots\DTOs\SnapshotSummaryData;
+use App\Shared\ApiResponse;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -22,7 +23,7 @@ final readonly class SnapshotsController
     {
         $limit = (int)$request->query('limit', 12);
         $snapshots = $this->compute->getIntervalSummaries($limit);
-        return response()->json($snapshots);
+        return ApiResponse::success($snapshots);
     }
 
     /**
@@ -34,6 +35,6 @@ final readonly class SnapshotsController
         $sellRate = (float)$request->input('sell_rate', 1.0);
 
         $this->snapshots->run($date, $sellRate);
-        return response()->json(['message' => 'Snapshot successfully created.'], Response::HTTP_CREATED);
+        return ApiResponse::success(null, 'Snapshot successfully created.', Response::HTTP_CREATED);
     }
 }

@@ -2,10 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Domain\Accounts\DTOs\AccountData;
+use App\Domain\Accounts\Services\AccountService;
+use App\Shared\ApiResponse;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Request;
-use App\Domain\Accounts\Services\AccountService;
-use App\Domain\Accounts\DTOs\AccountData;
 use Symfony\Component\HttpFoundation\Response;
 
 final readonly class AccountsController
@@ -20,7 +21,7 @@ final readonly class AccountsController
     public function index(Request $request)
     {
         $accounts = $this->accounts->getMergedAccounts();
-        return response()->json($accounts);
+        return ApiResponse::success($accounts);
     }
 
     public function store(Request $request)
@@ -35,7 +36,7 @@ final readonly class AccountsController
         );
         $createdArray = $this->accounts->createAccount($dto);
         $created = AccountData::from($createdArray);
-        return response()->json($created, Response::HTTP_CREATED);
+        return ApiResponse::success($created, 'Account created successfully', Response::HTTP_CREATED);
     }
 
     public function update(Request $request, int $id)
@@ -50,7 +51,7 @@ final readonly class AccountsController
         );
         $updatedArray = $this->accounts->updateAccount($id, $dto);
         $updated = AccountData::from($updatedArray);
-        return response()->json($updated);
+        return ApiResponse::success($updated, 'Account updated successfully');
     }
 
     /**
@@ -59,6 +60,6 @@ final readonly class AccountsController
     public function sync()
     {
         $accounts = $this->accounts->getMergedAccounts();
-        return response()->json($accounts);
+        return ApiResponse::success($accounts);
     }
 }
