@@ -1,6 +1,6 @@
 import { ContentPlaceholder } from '@/components/ContentPlaceholder';
-import { useFireshotsRecords, useFireshotsSummaries } from '@/hooks';
-import type { KpiField, SummaryRow } from '@/types/fireshots';
+import { useFireshotsRecordsQuery } from '@/hooks/useFireshotsRecordsQuery';
+import { useFireshotsSummariesQuery } from '@/hooks/useFireshotsSummariesQuery';
 import { Card, Grid, Select, SelectItem } from '@tremor/react';
 import { useMemo, useState } from 'react';
 import CompositionChartSection from '../components/CompositionChartSection';
@@ -9,46 +9,32 @@ import LayoutShell from '../components/LayoutShell';
 import SnapshotSummaryTable from '../components/SnapshotSummaryTable';
 
 export default function Dashboard() {
-    const [period, setPeriod] = useState<'7d' | '4w' | '6m'>('7d');
+    const [period, setPeriod] = useState<KpiPeriodOptions>('7d');
 
-    // fetch once per granularity
-    const { data: day30, loading: dayLoading } = useFireshotsSummaries(
-        'day',
-        30,
-    );
-    const { data: week12, loading: weekLoading } = useFireshotsSummaries(
-        'week',
-        12,
-    );
-    const { data: month12, loading: monthLoading } = useFireshotsSummaries(
-        'month',
-        12,
-    );
-    const { data: records, loading: recLoading } = useFireshotsRecords();
-
-    console.log(records, 'records');
+    const { data: day30 = [], isLoading: dayLoading } = useFireshotsSummariesQuery('day', 30);
+    const { data: week12 = [], isLoading: weekLoading } = useFireshotsSummariesQuery('week', 12);
+    const { data: month12 = [], isLoading: monthLoading } = useFireshotsSummariesQuery('month', 12);
+    const { data: records, isLoading: recLoading } = useFireshotsRecordsQuery();
 
     const isLoading = dayLoading || weekLoading || monthLoading || recLoading;
 
     // decide which slice KPI uses based on select
     const kpiSlice: SummaryRow[] = useMemo(() => {
-        if (period === '7d') return day30.slice(0, 7);
+        if (period === '7d') return day30.slice(-7);
         if (period === '4w') return week12.slice(0, 4);
         if (period === '6m') return month12.slice(0, 6);
         return [];
     }, [period, day30, week12, month12]);
 
     // precompute metrics once
-    const latest = kpiSlice[0];
-    const oldest = kpiSlice[kpiSlice.length - 1];
+    const latest = kpiSlice[kpiSlice.length - 1]; // ✅ latest
+    const oldest = kpiSlice[0];
+
     const totalTx = kpiSlice.reduce((sum, s) => sum + (s.transactions || 0), 0);
 
     const balanceVal = latest?.net_asset_value ?? 0;
     const txVal = totalTx;
-    const changeVal =
-        (latest?.net_asset_value ?? 0) -
-        (oldest?.net_asset_value ?? 0) -
-        totalTx;
+    const changeVal = (latest?.net_asset_value ?? 0) - (oldest?.net_asset_value ?? 0) - totalTx;
 
     const sparkData = {
         Balance: [...kpiSlice].map((s) => ({
@@ -77,28 +63,22 @@ export default function Dashboard() {
     const handleSnapshotRun = () => setReloadKey((k) => k + 1);
 
     return (
-        <LayoutShell>
+        <>
             <div className="p-4 sm:p-6 lg:p-8">
                 {/* Header */}
                 <header>
                     <div className="sm:flex sm:items-center sm:justify-between">
-                        <h3 className="text-tremor-title font-semibold text-tremor-content-strong dark:text-dark-tremor-content-strong">
-                            Overview
-                        </h3>
+                        <h3 className="text-tremor-title font-semibold text-tremor-content-strong dark:text-dark-tremor-content-strong">Overview</h3>
                         <div className="mt-4 items-center sm:mt-0 sm:flex sm:space-x-2">
                             <Select
                                 className="w-full sm:w-fit [&>button]:rounded-tremor-small"
                                 enableClear={false}
                                 value={period}
-                                onValueChange={(v) =>
-                                    setPeriod((v as any) ?? '7d')
-                                }
+                                onValueChange={(v) => setPeriod((v as any) ?? '7d')}
                             >
                                 <SelectItem value="7d">Last 7 Days</SelectItem>
                                 <SelectItem value="4w">Last 4 Weeks</SelectItem>
-                                <SelectItem value="6m">
-                                    Last 6 Months
-                                </SelectItem>
+                                <SelectItem value="6m">Last 6 Months</SelectItem>
                             </Select>
                         </div>
                     </div>
@@ -116,33 +96,18 @@ export default function Dashboard() {
                             </>
                         ) : (
                             <>
-                                {Object.entries(kpiData).map(
-                                    ([field, data]) => (
-                                        <KpiCard
-                                            key={field}
-                                            field={field as KpiField}
-                                            data={data}
-                                            records={records}
-                                        />
-                                    ),
-                                )}
+                                {Object.entries(kpiData).map(([field, data]) => (
+                                    <KpiCard key={field} period={period} field={field as KpiField} data={data} records={records} />
+                                ))}
                             </>
                         )}
                     </Grid>
 
                     {/* SNAPSHOT TABLE */}
-                    <SnapshotSummaryTable
-                        data={day30}
-                        loading={dayLoading}
-                        onSnapshotRun={handleSnapshotRun}
-                    />
+                    <SnapshotSummaryTable data={day30} loading={dayLoading} onSnapshotRun={handleSnapshotRun} />
 
                     {/* COMPOSITION CHART */}
-                    <CompositionChartSection
-                        weekly={week12}
-                        monthly={month12}
-                        loading={weekLoading || monthLoading}
-                    />
+                    <CompositionChartSection weekly={week12} monthly={month12} loading={weekLoading || monthLoading} />
 
                     {/* Placeholder */}
                     <Card className="mt-4 h-40 rounded-tremor-small p-2">
@@ -150,6 +115,9 @@ export default function Dashboard() {
                     </Card>
                 </main>
             </div>
-        </LayoutShell>
+        </>
     );
 }
+
+// Persistent layout
+Dashboard.layout = (page: any) => <LayoutShell children={page} />;

@@ -1,37 +1,34 @@
-'use client'
-
-import { useState } from 'react'
-import { Button, Card, Table, TableBody, TableCell, TableHead, TableHeaderCell, TableRow, Text } from '@tremor/react'
-import SnapshotDialog from './SnapshotDialog'
-import { formatNGN, formatUSD } from '@/lib/format'
-import { runSnapshot } from '@/lib/api'
-import type { SnapshotTableProps } from '@/types/fireshots'
+import { useRunSnapshotMutation } from '@/hooks/useRunSnapshotMutation';
+import { formatNGN, formatUSD } from '@/lib/format';
+import { Button, Card, Table, TableBody, TableCell, TableHead, TableHeaderCell, TableRow, Text } from '@tremor/react';
+import { useState } from 'react';
+import SnapshotDialog from './SnapshotDialog';
 
 export default function SnapshotSummaryTable({ data, loading, onSnapshotRun }: SnapshotTableProps) {
-    const [open, setOpen] = useState(false)
-    const [sellRate, setSellRate] = useState('')
-    const [buyDiff, setBuyDiff] = useState('25')
-    const [snapshotDate, setSnapshotDate] = useState<Date>(new Date())
+    const [open, setOpen] = useState(false);
+    const [sellRate, setSellRate] = useState('');
+    const [buyDiff, setBuyDiff] = useState('25');
+    const [snapshotDate, setSnapshotDate] = useState<Date>(new Date());
+
+    // 🔁 React Query mutation hook for snapshots
+    const runSnapshotMutation = useRunSnapshotMutation();
 
     const handleConfirm = async () => {
         const payload = {
             snapshot_date: snapshotDate.toISOString().split('T')[0],
             sell_rate: parseFloat(sellRate),
             buy_diff: buyDiff ? parseFloat(buyDiff) : 25,
-        }
-        await runSnapshot(payload)
-        setOpen(false)
-        onSnapshotRun?.()
-    }
+        };
+        await runSnapshotMutation.mutateAsync(payload);
+        setOpen(false);
+    };
 
     return (
         <Card className="p-6">
             {/* Header */}
             <div className="sm:flex sm:items-center sm:justify-between sm:space-x-10">
                 <div>
-                    <h3 className="font-semibold text-tremor-content-strong dark:text-dark-tremor-content-strong">
-                        Daily Snapshots
-                    </h3>
+                    <h3 className="font-semibold text-tremor-content-strong dark:text-dark-tremor-content-strong">Daily Snapshots</h3>
                     <p className="mt-1 text-tremor-default leading-6 text-tremor-content dark:text-dark-tremor-content">
                         Overview of recent captured daily portfolio summaries.
                     </p>
@@ -72,15 +69,15 @@ export default function SnapshotSummaryTable({ data, loading, onSnapshotRun }: S
                     ) : (
                         data.map((s) => (
                             <TableRow key={s.period}>
-                                <TableCell className="font-medium text-tremor-content-strong dark:text-dark-tremor-content-strong">
-                                    {s.period}
-                                </TableCell>
+                                <TableCell className="font-medium text-tremor-content-strong dark:text-dark-tremor-content-strong">{s.period}</TableCell>
                                 <TableCell className="text-right">{formatUSD(s.usd)}</TableCell>
                                 <TableCell className="text-right">{formatNGN(s.ngn)}</TableCell>
                                 <TableCell className="text-right">{formatNGN(s.net_asset_value)}</TableCell>
                                 <TableCell className="text-right">{formatNGN(s.transactions)}</TableCell>
                                 <TableCell
-                                    className={`text-right ${s.valuation_delta >= 0 ? 'text-emerald-700 dark:text-emerald-500' : 'text-red-700 dark:text-red-500'}`}
+                                    className={`text-right ${
+                                        s.valuation_delta >= 0 ? 'text-emerald-700 dark:text-emerald-500' : 'text-red-700 dark:text-red-500'
+                                    }`}
                                 >
                                     {formatNGN(s.valuation_delta)}
                                 </TableCell>
@@ -100,7 +97,9 @@ export default function SnapshotSummaryTable({ data, loading, onSnapshotRun }: S
                 buyDiff={buyDiff}
                 setBuyDiff={setBuyDiff}
                 onConfirm={handleConfirm}
+                confirmDisabled={runSnapshotMutation.isPending}
+                confirmLoading={runSnapshotMutation.isPending}
             />
         </Card>
-    )
+    );
 }

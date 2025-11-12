@@ -1,0 +1,26 @@
+{
+    "version": 3.1,
+    "output": {
+        "dir": "prodex",
+        "versioned": true,
+        "prefix": "combined",
+        "format": "md"
+    },
+    "entry": {
+        "files": ["**/(dashboard|accounts).tsx"],
+        "ui": {
+            "roots": ["app", "routes", "resources/js/**"],
+            "scanDepth": 2,
+            "priority": ["**/routes/web.php", "**/routes/api.php", "**/*index.*", "**/*main.*", "**/app.*"]
+        }
+    },
+    "resolve": {
+        "include": ["**/app.tsx"],
+        "aliases": {
+            "@": "resources/js"
+        },
+        "exclude": ["**/components/ui/**"],
+        "depth": 10,
+        "limit": 200
+    }
+}

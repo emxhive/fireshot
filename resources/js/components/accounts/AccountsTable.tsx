@@ -1,22 +1,9 @@
-import { cx, timeAgo } from '@/lib/utils';
+import { formatNGN, formatUSD } from '@/lib/format';
+import { cn, formatDate, timeAgo } from '@/lib/utils';
 import { RiPencilLine } from '@remixicon/react';
-import {
-    flexRender,
-    getCoreRowModel,
-    getSortedRowModel,
-    useReactTable,
-} from '@tanstack/react-table';
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableFoot,
-    TableHead,
-    TableHeaderCell,
-    TableRow,
-} from '@tremor/react';
+import { flexRender, getCoreRowModel, getSortedRowModel, useReactTable } from '@tanstack/react-table';
+import { Table, TableBody, TableCell, TableFoot, TableHead, TableHeaderCell, TableRow } from '@tremor/react';
 import React from 'react';
-import { Account } from './useAccounts';
 
 function IndeterminateCheckbox({ indeterminate, className, ...rest }: any) {
     const ref = React.useRef<HTMLInputElement>(null);
@@ -29,7 +16,7 @@ function IndeterminateCheckbox({ indeterminate, className, ...rest }: any) {
         <input
             type="checkbox"
             ref={ref}
-            className={cx(
+            className={cn(
                 'size-4 rounded border-tremor-border text-tremor-brand shadow-tremor-input focus:ring-tremor-brand-muted dark:border-dark-tremor-border dark:bg-dark-tremor-background dark:text-dark-tremor-brand dark:shadow-dark-tremor-input dark:focus:ring-dark-tremor-brand-muted',
                 className,
             )}
@@ -45,12 +32,7 @@ interface Props {
     onEdit: (account?: Account) => void;
 }
 
-const AccountsTable: React.FC<Props> = ({
-    accounts,
-    rowSelection,
-    setRowSelection,
-    onEdit,
-}) => {
+const AccountsTable: React.FC<Props> = ({ accounts, rowSelection, setRowSelection, onEdit }) => {
     const columns = React.useMemo(
         () => [
             {
@@ -94,15 +76,29 @@ const AccountsTable: React.FC<Props> = ({
                 header: 'Balance',
                 accessorKey: 'balance',
                 meta: { align: 'text-right' },
+                cell: ({ row }: any) => {
+                    const format = row.original.currency === 'NGN' ? formatNGN : formatUSD;
+                    return <span>{format(row.original.balance)}</span>;
+                },
             },
+
             {
                 header: 'Last Updated',
-                accessorKey: 'lastUpdated',
+                accessorKey: 'updatedAt',
                 meta: { align: 'text-right' },
-                cell: ({ row }: any) => (
-                    <span>{timeAgo(row.original.lastUpdated)}</span>
-                ),
+                cell: ({ row }: any) => {
+                    const short = timeAgo(row.original.updatedAt);
+                    const full = formatDate(row.original.updatedAt);
+
+                    return (
+                        <span className="group relative cursor-default select-none text-[0.8rem] font-semibold">
+                            <span className="transition-opacity duration-300 group-hover:opacity-0">{short}</span>
+                            <span className="absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100">{full}</span>
+                        </span>
+                    );
+                },
             },
+
             {
                 header: 'Actions',
                 accessorKey: 'actions',
@@ -142,16 +138,8 @@ const AccountsTable: React.FC<Props> = ({
                 {table.getHeaderGroups().map((hg) => (
                     <TableRow key={hg.id}>
                         {hg.headers.map((header: any) => (
-                            <TableHeaderCell
-                                key={header.id}
-                                className={cx(
-                                    header.column.columnDef.meta?.align,
-                                )}
-                            >
-                                {flexRender(
-                                    header.column.columnDef.header,
-                                    header.getContext(),
-                                )}
+                            <TableHeaderCell key={header.id} className={cn(header.column.columnDef.meta?.align)}>
+                                {flexRender(header.column.columnDef.header, header.getContext())}
                             </TableHeaderCell>
                         ))}
                     </TableRow>
@@ -165,40 +153,29 @@ const AccountsTable: React.FC<Props> = ({
                         onClick={() => row.toggleSelected(!row.getIsSelected())}
                         className="group select-none hover:bg-tremor-background-muted hover:dark:bg-dark-tremor-background-muted"
                     >
-                        {row
-                            .getVisibleCells()
-                            .map((cell: any, index: number) => (
-                                <TableCell
-                                    key={cell.id}
-                                    className={cx(
-                                        row.getIsSelected()
-                                            ? 'bg-tremor-background-muted dark:bg-dark-tremor-background-muted'
-                                            : '',
-                                        cell.column.columnDef.meta?.align,
-                                        'relative',
-                                    )}
-                                >
-                                    {index === 0 && row.getIsSelected() && (
-                                        <div className="absolute inset-y-0 left-0 w-0.5 bg-tremor-brand dark:bg-dark-tremor-brand" />
-                                    )}
-                                    {flexRender(
-                                        cell.column.columnDef.cell,
-                                        cell.getContext(),
-                                    )}
-                                </TableCell>
-                            ))}
+                        {row.getVisibleCells().map((cell: any, index: number) => (
+                            <TableCell
+                                key={cell.id}
+                                className={cn(
+                                    row.getIsSelected() ? 'bg-tremor-background-muted dark:bg-dark-tremor-background-muted' : '',
+                                    cell.column.columnDef.meta?.align,
+                                    'relative',
+                                )}
+                            >
+                                {index === 0 && row.getIsSelected() && (
+                                    <div className="absolute inset-y-0 left-0 w-0.5 bg-tremor-brand dark:bg-dark-tremor-brand" />
+                                )}
+                                {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                            </TableCell>
+                        ))}
                     </TableRow>
                 ))}
             </TableBody>
 
             <TableFoot>
                 <TableRow>
-                    <TableHeaderCell
-                        colSpan={7}
-                        className="font-normal tabular-nums"
-                    >
-                        {Object.keys(rowSelection).length} of{' '}
-                        {table.getRowModel().rows.length} selected
+                    <TableHeaderCell colSpan={7} className="font-normal tabular-nums">
+                        {Object.keys(rowSelection).length} of {table.getRowModel().rows.length} selected
                     </TableHeaderCell>
                 </TableRow>
             </TableFoot>

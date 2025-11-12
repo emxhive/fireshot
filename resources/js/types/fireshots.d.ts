@@ -2,16 +2,16 @@
 
 type Granularity = 'day' | 'week' | 'month';
 type KpiField = 'Balance' | 'Change' | 'Transactions';
-type PeriodOptions = '7d' | '4w' | '6m';
+type KpiPeriodOptions = '7d' | '4w' | '6m';
 
 // UI-facing shape
- interface Account {
-    id: number
-    name: string
-    currency: string
-    fee: number
-    balance: number
-    lastUpdated: string
+interface Account {
+    id: number;
+    name: string;
+    currency: string;
+    fee: number;
+    balance: number;
+    updatedAt: string;
 }
 
 interface SummaryRow {
@@ -70,7 +70,7 @@ interface KpiCardDataSet {
 
 interface KpiCardProps {
     field: KpiField;
-    period : PeriodOptions;
+    period: KpiPeriodOptions;
     data: KpiCardDataSet;
     records: RecordData;
 }

@@ -1,9 +1,6 @@
 import clsx, { type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
-export function cx(...args: ClassValue[]) {
-    return twMerge(clsx(...args));
-}
 export function cn(...args: ClassValue[]) {
     return twMerge(clsx(...args));
 }
@@ -38,72 +35,45 @@ export const hasErrorInput = [
     'ring-red-200 dark:ring-red-700/30',
 ];
 
-
-// timeAgoFromString.ts
-export function timeAgo(input: string): string {
-    // Match common datetime formats: YYYY-MM-DD HH:MM(:SS)?
-    const match = input.match(
-        /\b(\d{4})[-/](\d{1,2})[-/](\d{1,2})[ T](\d{1,2}):(\d{2})(?::(\d{2}))?\b/
-    );
-    if (!match) return "No valid date found";
-
-    const [_, y, m, d, h, min, s] = match;
-    const parsedDate = new Date(
-        Number(y),
-        Number(m) - 1,
-        Number(d),
-        Number(h),
-        Number(min),
-        Number(s || 0)
-    );
+export function timeAgo(dateInput: string | Date): string {
+    const date = typeof dateInput === 'string' ? new Date(dateInput) : dateInput;
+    if (isNaN(date.getTime())) return 'Invalid date';
 
     const now = new Date();
-    const diffMs = now.getTime() - parsedDate.getTime();
-    if (diffMs < 0) return "In the future";
+    const diff = Math.floor((now.getTime() - date.getTime()) / 1000); // seconds
 
-    const seconds = Math.floor(diffMs / 1000);
-    const minutes = Math.floor(seconds / 60);
-    const hours = Math.floor(minutes / 60);
-    const days = Math.floor(hours / 24);
-    const weeks = Math.floor(days / 7);
-    const months = Math.floor(days / 30);
-    const years = Math.floor(days / 365);
+    if (diff < 0) return 'In the future';
 
-    const pluralize = (n: number, unit: string) =>
-        `${n} ${unit}${n !== 1 ? "s" : ""} ago`;
+    const units: [number, string][] = [
+        [60, 'second'],
+        [60, 'minute'],
+        [24, 'hour'],
+        [7, 'day'],
+        [4.34524, 'week'],
+        [12, 'month'],
+        [Number.POSITIVE_INFINITY, 'year'],
+    ];
 
-    if (seconds < 60) return pluralize(seconds, "second");
-    if (minutes < 60) return pluralize(minutes, "minute");
-    if (hours < 24) return pluralize(hours, "hour");
-    if (days < 7) return pluralize(days, "day");
-    if (weeks < 5) return pluralize(weeks, "week");
-    if (months < 12) return pluralize(months, "month");
-    return pluralize(years, "year");
+    let unitIndex = 0;
+    let value = diff;
+
+    for (; unitIndex < units.length - 1 && value >= units[unitIndex][0]; unitIndex++) {
+        value /= units[unitIndex][0];
+    }
+
+    const rounded = Math.floor(value);
+    const label = units[unitIndex][1];
+    return `${rounded} ${label}${rounded !== 1 ? 's' : ''} ago`;
 }
-// --- Mock dataset ---
-export const initialAccounts = [
-    {
-        id: 1,
-        name: 'Kuda NGN',
-        currency: 'NGN',
-        fee: 0.5,
-        balance: 120000,
-        lastUpdated: '2025-10-10 10:00',
-    },
-    {
-        id: 2,
-        name: 'USDT Wallet',
-        currency: 'USD',
-        fee: 0.25,
-        balance: 350,
-        lastUpdated: '2025-10-12 14:32',
-    },
-    {
-        id: 3,
-        name: 'Wise USD',
-        currency: 'USD',
-        fee: 1.0,
-        balance: 1500,
-        lastUpdated: '2025-10-13 08:10',
-    },
-];
+
+export function formatDate(dateInput: string | number | Date) {
+    const date = new Date(dateInput);
+    return date.toLocaleString('en-GB', {
+        hour12: false,
+        year: '2-digit',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+    });
+}

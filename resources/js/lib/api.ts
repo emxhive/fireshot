@@ -1,38 +1,50 @@
-import { create, index, update } from '@/routes/shots/accounts';
+import api from './axiosClient';
 
+const MIN_DELAY_MS = 1000; // 👈 global minimum delay (tweak as you wish)
+const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-import { callApi } from './apiFactory';
-
-export async function fetchAccounts(): Promise<FetchAccountsResponse> {
-    return callApi<undefined, FetchAccountsResponse>(index.get());
+async function handle<R>(promise: Promise<R>): Promise<R | { status: 'error'; message: string }> {
+    try {
+        const [res] = await Promise.all([
+            promise,
+            wait(MIN_DELAY_MS), // ✅ ensures every API call respects min delay
+        ]);
+        return res;
+    } catch (error: any) {
+        const msg = error?.response?.data?.message ?? error?.message ?? 'API call failed';
+        return { status: 'error', message: msg };
+    }
 }
 
-export async function updateAccount(
-    accountId: number,
-    payload: Record<string, any>,
-): Promise<SaveAccountResponse> {
-    const routeDef = update.post({ account: accountId });
-    return callApi<typeof payload, SaveAccountResponse>(routeDef, payload);
+/** DASHBOARD */
+export async function getSummaries(granularity: string, limit?: number) {
+    const params = new URLSearchParams({ granularity });
+    if (limit) params.append('limit', String(limit));
+    return handle(api.get(`/api/shots/summaries?${params}`).then((r) => r.data));
 }
 
-export async function createAccount(
-    payload: Record<string, any>,
-): Promise<SaveAccountResponse> {
-    return callApi<typeof payload, SaveAccountResponse>(create.post(), payload);
+export async function getRecords() {
+    return handle(api.get('/api/shots/records').then((r) => r.data));
 }
 
+export async function runSnapshot(payload: { snapshot_date: string; sell_rate: number; buy_diff?: number }) {
+    return handle(api.post('/api/shots/run', payload).then((r) => r.data));
+}
 
+/** ACCOUNTS */
+export async function fetchAccounts() {
+    return handle(api.get('/api/shots/accounts').then((r) => r.data));
+}
 
-export async function runSnapshot(payload: {
-    snapshot_date: string;
-    sell_rate: number;
-    buy_diff?: number;
-}) {
-    return callApi<typeof payload, any>(
-        {
-            url: '/api/shots/snapshots/run',
-            method: 'post',
-        },
-        payload,
-    );
+export async function createAccount(payload: Record<string, any>) {
+    return handle(api.post('/api/shots/accounts/create', payload).then((r) => r.data));
+}
+
+export async function updateAccount(id: number, payload: Record<string, any>) {
+    return handle(api.post(`/api/shots/accounts/${id}`, payload).then((r) => r.data));
+}
+
+/** CACHE MAINTENANCE */
+export async function clearCache(scope: string) {
+    return handle(api.get(`/api/shots/cache?scope=${scope}`).then((r) => r.data));
 }

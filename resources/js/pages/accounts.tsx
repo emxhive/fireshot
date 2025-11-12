@@ -1,7 +1,7 @@
 import LayoutShell from '@/components/LayoutShell';
 import AccountDrawer from '@/components/accounts/AccountDrawer';
 import AccountsTable from '@/components/accounts/AccountsTable';
-import useAccounts from '@/components/accounts/useAccounts';
+import useAccounts from '@/hooks/useAccounts';
 import { RiPlayListAddLine } from '@remixicon/react';
 import { Button, Card } from '@tremor/react';
 
@@ -15,6 +15,7 @@ export default function Accounts() {
         moveToNextAccount,
         updateFormData,
         handleSave,
+        saveStatus,
         editingAccount,
         currentFormData,
         isDrawerOpen,
@@ -25,18 +26,11 @@ export default function Accounts() {
     } = useAccounts();
 
     return (
-        <LayoutShell>
+        <>
             <div className="space-y-6 p-4 sm:p-6 lg:p-8">
                 <div className="flex items-center justify-between">
-                    <h3 className="text-tremor-title font-semibold text-tremor-content-strong dark:text-dark-tremor-content-strong">
-                        Accounts
-                    </h3>
-                    <Button
-                        color="blue"
-                        variant="primary"
-                        onClick={openForAdd}
-                        icon={RiPlayListAddLine}
-                    >
+                    <h3 className="text-tremor-title font-semibold text-tremor-content-strong dark:text-dark-tremor-content-strong">Accounts</h3>
+                    <Button color="blue" variant="primary" onClick={openForAdd} icon={RiPlayListAddLine}>
                         Add Account
                     </Button>
                 </div>
@@ -48,11 +42,7 @@ export default function Accounts() {
                         setRowSelection={setRowSelection}
                         onEdit={(account) => {
                             const selectedRows = Object.keys(rowSelection);
-                            const selectedAccounts = selectedRows.length
-                                ? accounts.filter((_, i) =>
-                                      selectedRows.includes(i.toString()),
-                                  )
-                                : [];
+                            const selectedAccounts = selectedRows.length ? accounts.filter((_: any, i: any) => selectedRows.includes(i.toString())) : [];
                             openForEdit(account, selectedAccounts);
                         }}
                     />
@@ -70,7 +60,11 @@ export default function Accounts() {
                 queueIndex={queueIndex}
                 totalQueued={editQueue.length}
                 editingAccount={editingAccount}
+                saveStatus={saveStatus} // ✅ new prop
             />
-        </LayoutShell>
+        </>
     );
 }
+
+// Persistent layout
+Accounts.layout = (page: any) => <LayoutShell children={page} />;

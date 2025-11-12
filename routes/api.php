@@ -1,26 +1,30 @@
 <?php
 
-use App\Http\Controllers\Shots\{AccountsController,
-    CacheController,
-    RecordController,
-    SeriesController,
-    SnapshotController,
-    SummaryController};
-use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\{AccountsController, SnapshotsController, TransactionsController};
 
-// All analytics endpoints under /api/shots
 Route::prefix('shots')->group(function () {
-    Route::get('/summaries', [SummaryController::class, 'index']);
-    Route::get('/records', [RecordController::class, 'index']);
-    Route::get('/snapshots/run', [SnapshotController::class, 'run']);
-    Route::get('/cache', [CacheController::class, 'clear']);
+    // --- Snapshots ---
+    Route::get('/summaries', [SnapshotsController::class, 'summaries'])
+        ->name('shots.summaries');
+    Route::post('/run', [SnapshotsController::class, 'run'])
+        ->name('shots.run');
 
-    // Optional extras
-    Route::get('/series', [SeriesController::class, 'index']);
+    // --- Transactions ---
+    Route::get('/transactions', [TransactionsController::class, 'index'])
+        ->name('shots.transactions.index');
+    Route::get('/transactions/summary', [TransactionsController::class, 'summary'])
+        ->name('shots.transactions.summary');
+    Route::post('/transactions/refresh', [TransactionsController::class, 'refresh'])
+        ->name('shots.transactions.refresh');
 
+    // --- Accounts ---
+    Route::get('/accounts', [AccountsController::class, 'index'])
+        ->name('shots.accounts.index');
+    Route::post('/accounts/create', [AccountsController::class, 'store'])
+        ->name('shots.accounts.create');
+    Route::put('/accounts/{account}', [AccountsController::class, 'update'])
+        ->name('shots.accounts.update');
+    Route::post('/accounts/sync', [AccountsController::class, 'sync'])
+        ->name('shots.accounts.sync');
 
-    // Accounts endpoints
-    Route::get('/accounts', [AccountsController::class, 'index'])->name('shots.accounts.index');
-    Route::post('/accounts/{account}', [AccountsController::class, 'update'])->name('shots.accounts.update');
-    Route::post('/accounts/create', [AccountsController::class, 'create'])->name('shots.accounts.create');
 });

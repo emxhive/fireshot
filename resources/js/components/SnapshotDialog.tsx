@@ -1,12 +1,4 @@
-import {
-    Button,
-    DatePicker,
-    Dialog,
-    DialogPanel,
-    Text,
-    TextInput,
-    Title,
-} from '@tremor/react';
+import { Button, DatePicker, Dialog, DialogPanel, Text, TextInput, Title } from '@tremor/react';
 
 type Props = {
     open: boolean;
@@ -18,6 +10,8 @@ type Props = {
     buyDiff: string;
     setBuyDiff: (v: string) => void;
     onConfirm: () => void;
+    confirmDisabled: boolean;
+    confirmLoading: boolean;
 };
 
 export default function SnapshotDialog({
@@ -30,6 +24,8 @@ export default function SnapshotDialog({
     buyDiff,
     setBuyDiff,
     onConfirm,
+    confirmDisabled,
+    confirmLoading,
 }: Props) {
     return (
         <Dialog open={open} onClose={onClose} static={true}>
@@ -37,30 +33,19 @@ export default function SnapshotDialog({
                 <div className="space-y-1">
                     <Title>Take Snapshot</Title>
                     <Text className="text-tremor-content">
-                        Choose the Lagos calendar date and enter the FX sell
-                        rate (and optional buy-diff) to capture today’s
-                        balances.
+                        Choose the Lagos calendar date and enter the FX sell rate (and optional buy-diff) to capture today’s balances.
                     </Text>
                 </div>
 
                 {/* Form layout */}
                 <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
                     <div className="space-y-2">
-                        <Text className="text-sm font-medium text-tremor-content">
-                            Snapshot Date
-                        </Text>
-                        <DatePicker
-                            enableYearNavigation
-                            value={snapshotDate}
-                            onValueChange={(v) => setSnapshotDate(v as Date)}
-                            className="w-full"
-                        />
+                        <Text className="text-sm font-medium text-tremor-content">Snapshot Date</Text>
+                        <DatePicker enableYearNavigation value={snapshotDate} onValueChange={(v) => setSnapshotDate(v as Date)} className="w-full" />
                     </div>
 
                     <div className="space-y-2">
-                        <Text className="text-sm font-medium text-tremor-content">
-                            Sell Rate (NGN)
-                        </Text>
+                        <Text className="text-sm font-medium text-tremor-content">Sell Rate (NGN)</Text>
                         <TextInput
                             type="number"
                             inputMode="decimal"
@@ -72,9 +57,7 @@ export default function SnapshotDialog({
                     </div>
 
                     <div className="space-y-2 md:col-span-2">
-                        <Text className="text-sm font-medium text-tremor-content">
-                            Buy Diff (NGN)
-                        </Text>
+                        <Text className="text-sm font-medium text-tremor-content">Buy Diff (NGN)</Text>
                         <TextInput
                             type="number"
                             inputMode="decimal"
@@ -84,8 +67,7 @@ export default function SnapshotDialog({
                             className="w-full"
                         />
                         <Text className="text-xs text-tremor-content-subtle">
-                            Optional: difference between sell and buy rates. If
-                            left blank, buy rate = sell rate.
+                            Optional: difference between sell and buy rates. If left blank, buy rate = sell rate.
                         </Text>
                     </div>
                 </div>
@@ -95,7 +77,9 @@ export default function SnapshotDialog({
                     <Button variant="secondary" onClick={() => onClose(false)}>
                         Cancel
                     </Button>
-                    <Button onClick={onConfirm}>Confirm</Button>
+                    <Button onClick={onConfirm} disabled={confirmDisabled}>
+                        {confirmLoading ? 'Running…' : 'Confirm'}
+                    </Button>
                 </div>
             </DialogPanel>
         </Dialog>

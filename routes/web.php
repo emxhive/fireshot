@@ -12,4 +12,6 @@ Route::get('/dashboard', [DashboardController::class, '__invoke'])
 Route::get('/accounts', fn() => Inertia::render('accounts'))
     ->name('accounts');
 
+Route::get('/settings', fn() => Inertia::render('settings'));
+
 Route::fallback(fn() => redirect()->route('dashboard'));

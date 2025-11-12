@@ -1,0 +1,26 @@
+
+@APP_URL =http://fireshot.test
+@baseUrl = {{APP_URL}}
+
+
+
+
+### 🔧 Setup (define variables first — PhpStorm requires them explicitly)
+@fireflyBase = https://fireflly.onrender.com/api/v1
+@authToken = Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiIxIiwianRpIjoiZTAxMDQ4MzNhYWFiNTc0MWYyMTgzNTFkZjlhODdhYzgzZmQwOTQ3OWNlMTZlNTMxMDczNTU5NzU2ODZkMzhlMzZhYmY2MjJjNTg2YWIwZjgiLCJpYXQiOjE3NjA1NDYyMjIuMjI2MjkyLCJuYmYiOjE3NjA1NDYyMjIuMjI2Mjk2LCJleHAiOjE3OTIwODIyMjEuOTg3ODAzLCJzdWIiOiIxIiwic2NvcGVzIjpbXX0.K_qMPhwGKyEoewopJmCJM1ibo_kVHH4N5rm65Xe1CStfFYyOPOrWTfm6djDo4QhGNMdpBZyuRdQ8CZGMUKLqH1-FOrnO1FldL83n6U2PLgKB-wq3WXWkvYEQqMMvJama1qb7-GKJQ1KnkTJkpiNHRRWtHd07zcPO4cwQtbPJna6idEiW47fHXBKXTPVe_IFiTTaClO_euL_Gm7RiBC4PI0A6R1yzagBK4IvTgtsO8a0BiyjBwwJJF0EkKfehkesiJnz4EnJWhUxOs3Zskl45Ug2J51pk8OGhw8pFkVI6SHonXTfwqduXrxb2hNm9vvMhJsOLU3vN2Ashn6e6Ldvzj_skyOD8K4uAS1O7tbgDGRBLtOkRMp3vh1eLUyQr4dl6ZOZSamDH3BOlWhcXqy2j1fNk1zCQZCKJsG9OgCB4ZwybLrcH5FEXxCjxtlLZgz00GxvXO4YCy8YiDgFsFt846-fAkG9TeXusq3rJNun-EZv5JMs_38kKd7RVj9Ypw18M0ic1JiGGsqipnlaonzGIYF6lbXcdLqBt4_m8BKrvtGU4jPwYlYdxIVuGDqs28FoVItnGnyigZLOllB7XBm4pYy721TRsSzgM_WcFLQpPwKwmAJ-JM7HDBZU_J-qU4zaToXl1ca-b8P8jn-NKpEEw_6X2pIRzMjfj233VSn5U6lg
+@accountId = 36
+
+
+### 1️⃣ Fetch all transactions under shots
+GET {{baseUrl}}/api/shots/transactions
+Accept: application/json
+
+
+### 1️⃣ Refresh cache
+POST {{baseUrl}}/api/shots/transactions/refresh
+Accept: application/json
+
+
+### 1️⃣ Fetch summaries
+GET {{baseUrl}}/api/shots/summaries
+Accept: application/json

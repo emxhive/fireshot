@@ -1,7 +1,7 @@
 import * as React from 'react';
 import * as DrawerPrimitives from '@radix-ui/react-dialog';
 import { RiCloseLine } from '@remixicon/react';
-import { cx, focusRing } from '@/lib/utils';
+import { cn, focusRing } from '@/lib/utils';
 
 /* -----------------------------------------------------------------------------
  * Root + Trigger + Close
@@ -16,7 +16,7 @@ const DrawerTrigger = React.forwardRef<
     React.ElementRef<typeof DrawerPrimitives.Trigger>,
     React.ComponentPropsWithoutRef<typeof DrawerPrimitives.Trigger>
 >(({ className, ...props }, ref) => (
-    <DrawerPrimitives.Trigger ref={ref} className={cx(className)} {...props} />
+    <DrawerPrimitives.Trigger ref={ref} className={cn(className)} {...props} />
 ));
 DrawerTrigger.displayName = 'Drawer.Trigger';
 
@@ -24,7 +24,7 @@ const DrawerClose = React.forwardRef<
     React.ElementRef<typeof DrawerPrimitives.Close>,
     React.ComponentPropsWithoutRef<typeof DrawerPrimitives.Close>
 >(({ className, ...props }, ref) => (
-    <DrawerPrimitives.Close ref={ref} className={cx(className)} {...props} />
+    <DrawerPrimitives.Close ref={ref} className={cn(className)} {...props} />
 ));
 DrawerClose.displayName = 'Drawer.Close';
 
@@ -41,7 +41,7 @@ const DrawerOverlay = React.forwardRef<
 >(({ className, ...props }, forwardedRef) => (
     <DrawerPrimitives.Overlay
         ref={forwardedRef}
-        className={cx(
+        className={cn(
             'fixed inset-0 z-50 bg-black/5 ',
             'data-[state=open]:animate-in data-[state=open]:fade-in data-[state=closed]:animate-out data-[state=closed]:fade-out',
             'transition-opacity duration-300 ease-out',
@@ -60,7 +60,7 @@ const DrawerContent = React.forwardRef<
         <DrawerOverlay />
         <DrawerPrimitives.Content
             ref={forwardedRef}
-            className={cx(
+            className={cn(
                 // fit-content height, vertically centered
                 "fixed right-2 top-1/2 -translate-y-1/2 z-50 flex w-[95vw] max-w-lg flex-col overflow-hidden rounded-md border p-6 shadow-lg focus:outline-hidden",
                 // colors
@@ -93,7 +93,7 @@ const DrawerHeader = React.forwardRef<
         className="flex items-start justify-between gap-x-4 border-b border-gray-200 pb-4 dark:border-gray-900"
         {...props}
     >
-        <div className={cx('mt-1 flex flex-col gap-y-1', className)}>
+        <div className={cn('mt-1 flex flex-col gap-y-1', className)}>
             {children}
         </div>
 
@@ -117,7 +117,7 @@ const DrawerTitle = React.forwardRef<
 >(({ className, ...props }, forwardedRef) => (
     <DrawerPrimitives.Title
         ref={forwardedRef}
-        className={cx(
+        className={cn(
             'text-base font-semibold text-gray-900 dark:text-gray-50',
             className,
         )}
@@ -132,7 +132,7 @@ const DrawerDescription = React.forwardRef<
 >(({ className, ...props }, forwardedRef) => (
     <DrawerPrimitives.Description
         ref={forwardedRef}
-        className={cx('text-gray-500 dark:text-gray-500', className)}
+        className={cn('text-gray-500 dark:text-gray-500', className)}
         {...props}
     />
 ));
@@ -144,7 +144,7 @@ const DrawerBody = React.forwardRef<
 >(({ className, ...props }, ref) => (
     <div
         ref={ref}
-        className={cx('flex-1 space-y-6 py-4', className)}
+        className={cn('flex-1 space-y-6 py-4', className)}
         {...props}
     />
 ));
@@ -155,7 +155,7 @@ const DrawerFooter = ({
                           ...props
                       }: React.HTMLAttributes<HTMLDivElement>) => (
     <div
-        className={cx(
+        className={cn(
             'flex flex-col-reverse border-t border-gray-200 pt-4 sm:flex-row sm:justify-end sm:space-x-2 dark:border-gray-900',
             'bg-white px-6 pb-4 dark:bg-[#090E1A]',
             className,
