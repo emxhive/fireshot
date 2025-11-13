@@ -1,33 +1,43 @@
+import { formatNGN } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { Card, SparkAreaChart } from '@tremor/react';
+import { useMemo } from 'react';
 
-export default function KpiCard({ field, data, period, records }: KpiCardProps) {
-    const high =
-        field === 'Balance'
-            ? (records?.net_asset_value?.high?.value ?? 0)
-            : field === 'Change'
-              ? period === '7d'
-                  ? (records?.valuation_delta?.week?.high?.value ?? 0)
-                  : (records?.valuation_delta?.month?.high?.value ?? 0)
-              : period === '7d'
-                ? (records?.transactions?.week?.high?.value ?? 0)
-                : (records?.transactions?.month?.high?.value ?? 0);
-
+export default function KpiCard({ field, data, period }: KpiCardProps) {
     const value = data?.value ?? 0;
     const sparkData = data?.spark ?? [];
 
-    const delta = value - high;
-    const pct = high !== 0 ? ((Math.abs(delta) / high) * 100).toFixed(1) + '%' : '0%';
-    const changeType = delta === 0 ? 'neutral' : delta > 0 ? 'positive' : 'negative';
+    const { delta, pct, changeType } = useMemo(() => {
+        const recent = data?.recent;
+        const [prev, curr] = recent ?? [undefined, undefined];
+
+        // 🔹 Compute delta only if both values exist
+        const d = prev !== undefined && curr !== undefined ? curr - prev : 0;
+
+        // 🔹 Handle percentage correctly (avoid false zero when prev = 0)
+        let pctStr: string;
+        if (prev === undefined || curr === undefined) {
+            pctStr = '—';
+        } else if (prev === 0 && curr !== 0) {
+            pctStr = curr > 0 ? '∞' : '-∞';
+        } else if (prev === 0 && curr === 0) {
+            pctStr = '0%';
+        } else {
+            const pctNum = (d / prev) * 100;
+            pctStr = `${pctNum.toFixed(2)}%`;
+        }
+
+        // 🔹 Determine trend direction
+        const type: 'positive' | 'negative' | 'neutral' = d === 0 ? 'neutral' : d > 0 ? 'positive' : 'negative';
+
+        return { delta: d, pct: pctStr, changeType: type };
+    }, [data?.recent]);
 
     const summary = [
         {
             name: field,
             tickerSymbol: period.toUpperCase(),
-            value: value.toLocaleString(undefined, {
-                maximumFractionDigits: 2,
-                minimumFractionDigits: 2,
-            }),
+            value: formatNGN(value),
             change: (delta >= 0 ? '+' : '') + delta.toFixed(2),
             percentageChange: pct,
             changeType,

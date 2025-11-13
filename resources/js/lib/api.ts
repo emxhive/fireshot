@@ -22,10 +22,6 @@ export async function getSummaries(limit?: number) {
     return handle(api.get(`/api/shots/summaries${query}`).then((r) => r.data));
 }
 
-export async function getRecords() {
-    return handle(api.get('/api/shots/records').then((r) => r.data));
-}
-
 export async function runSnapshot(payload: { snapshot_date: string; sell_rate: number; buy_diff?: number }) {
     return handle(api.post('/api/shots/run', payload).then((r) => r.data));
 }
@@ -43,7 +39,6 @@ export async function updateAccount(id: number, payload: Record<string, any>) {
     return handle(api.post(`/api/shots/accounts/${id}`, payload).then((r) => r.data));
 }
 
-/** CACHE MAINTENANCE */
-export async function clearCache(scope: string) {
-    return handle(api.get(`/api/shots/cache?scope=${scope}`).then((r) => r.data));
+export async function refreshTransactions(): Promise<{ status: string; message?: string }> {
+    return handle(api.post('/api/shots/transactions/refresh').then((r) => r.data));
 }

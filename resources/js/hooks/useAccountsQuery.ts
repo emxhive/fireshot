@@ -8,7 +8,7 @@ export function useAccountsQuery() {
         queryFn: async () => {
             const res: any = await fetchAccounts();
             if (res.status !== 'success') throw new Error(res.message);
-            return res.accounts;
+            return res.data;
         },
     });
 }

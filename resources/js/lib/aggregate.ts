@@ -1,64 +1,84 @@
-import { parseISO, startOfMonth, startOfWeek } from 'date-fns';
+import { safeParseDate } from '@/lib/utils';
+import { startOfDay, startOfMonth, startOfWeek } from 'date-fns';
 
 type AggregationGranularity = 'day' | 'week' | 'month';
 
 function getBucketKey(date: Date, granularity: AggregationGranularity) {
+    // Use local-time bucket starts and return numeric timestamp as the grouping key
     switch (granularity) {
         case 'week':
-            return startOfWeek(date, { weekStartsOn: 1 }).toISOString();
+            return startOfWeek(date, { weekStartsOn: 1 }).getTime();
         case 'month':
-            return startOfMonth(date).toISOString();
+            return startOfMonth(date).getTime();
         default:
-            return date.toISOString();
+            return startOfDay(date).getTime();
     }
 }
 
-function safeParseDate(value: string) {
-    const parsed = parseISO(value);
-    return Number.isNaN(parsed.getTime()) ? new Date(value) : parsed;
-}
-
-export function aggregateSummariesByGranularity(
-    data: SummaryRow[],
-    granularity: AggregationGranularity,
-): SummaryRow[] {
+export function aggregateSummariesByGranularity(data: SummaryRow[], granularity: AggregationGranularity): SummaryRow[] {
     if (!data.length) return [];
 
+    // Always ensure chronological ascending order
+    const sorted = [...data].sort(
+        (a, b) => safeParseDate(a.from).getTime() - safeParseDate(b.from).getTime(),
+    );
+
     if (granularity === 'day') {
-        return [...data];
+        return sorted;
     }
 
-    const groups = new Map<string, SummaryRow>();
-    const order: string[] = [];
+    type Bucket = {
+        row: SummaryRow; // accumulator row
+        bucketKey: number;
+        latestToTs: number; // for stock fields
+        earliestFromTs: number;
+        latestToStr: string;
+    };
 
-    for (const row of data) {
+    const groups = new Map<number, Bucket>();
+
+    for (const row of sorted) {
         const fromDate = safeParseDate(row.from);
-        const key = getBucketKey(fromDate, granularity);
-        const existing = groups.get(key);
+        const toDate = safeParseDate(row.to);
+        const key = getBucketKey(fromDate, granularity) as number;
 
+        const existing = groups.get(key);
         if (!existing) {
-            groups.set(key, { ...row });
-            order.push(key);
+            // Initialize bucket with current row values
+            groups.set(key, {
+                row: { ...row },
+                bucketKey: key,
+                latestToTs: toDate.getTime(),
+                earliestFromTs: fromDate.getTime(),
+                latestToStr: row.to,
+            });
             continue;
         }
 
-        existing.usd += row.usd;
-        existing.ngn += row.ngn;
-        existing.netAssetValue += row.netAssetValue;
-        existing.valuationDelta += row.valuationDelta;
-        existing.transactions += row.transactions;
+        // Flows: sum
+        existing.row.valuationDelta += row.valuationDelta;
+        existing.row.transactions += row.transactions;
 
-        if (fromDate.getTime() < safeParseDate(existing.from).getTime()) {
-            existing.from = row.from;
+        // From/To bounds: earliest from, latest to
+        if (fromDate.getTime() < existing.earliestFromTs) {
+            existing.earliestFromTs = fromDate.getTime();
+            existing.row.from = row.from;
         }
+        if (toDate.getTime() > existing.latestToTs) {
+            existing.latestToTs = toDate.getTime();
+            existing.latestToStr = row.to;
+            existing.row.to = row.to;
 
-        const toDate = safeParseDate(row.to);
-        if (toDate.getTime() > safeParseDate(existing.to).getTime()) {
-            existing.to = row.to;
+            // Stocks: take latest in bucket
+            existing.row.usd = row.usd;
+            existing.row.ngn = row.ngn;
+            existing.row.netAssetValue = row.netAssetValue;
         }
     }
 
-    return order
-        .map((key) => groups.get(key))
-        .filter((entry): entry is SummaryRow => Boolean(entry));
+    const buckets = Array.from(groups.values())
+        .sort((a, b) => a.bucketKey - b.bucketKey)
+        .map((b) => b.row);
+
+    return buckets;
 }

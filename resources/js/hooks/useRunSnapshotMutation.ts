@@ -1,4 +1,4 @@
-import { useInvalidateFireshotsData } from '@/hooks/useCacheMaintenance';
+import { useInvalidateFireshotsData } from '@/hooks/useRefreshTransactionsMutation';
 import { runSnapshot } from '@/lib/api';
 import { useMutation } from '@tanstack/react-query';
 

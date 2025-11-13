@@ -8,9 +8,7 @@ export function useFireshotsSummariesQuery(limit?: number) {
     return useQuery<SummaryRow[]>({
         queryKey: ['summaries', limit],
         queryFn: async () => {
-            const res = (await getSummaries(
-                limit,
-            )) as SummarySuccessResponse | SummaryErrorResponse;
+            const res = (await getSummaries(limit)) as SummarySuccessResponse | SummaryErrorResponse;
 
             if (res.status !== 'success') throw new Error(res.message);
             return res.data;

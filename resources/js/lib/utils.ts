@@ -1,4 +1,5 @@
 import clsx, { type ClassValue } from 'clsx';
+import { parseISO } from 'date-fns';
 import { twMerge } from 'tailwind-merge';
 
 export function cn(...args: ClassValue[]) {
@@ -76,4 +77,8 @@ export function formatDate(dateInput: string | number | Date) {
         hour: '2-digit',
         minute: '2-digit',
     });
+}
+export function safeParseDate(value: string) {
+    const parsed = parseISO(value);
+    return Number.isNaN(parsed.getTime()) ? new Date(value) : parsed;
 }
