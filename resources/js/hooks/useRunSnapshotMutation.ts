@@ -1,4 +1,4 @@
-import { useInvalidateFireshotsData } from '@/hooks/useRefreshTransactionsMutation';
+import { useInvalidateData } from '@/hooks/useInvalidateData';
 import { runSnapshot } from '@/lib/api';
 import { useMutation } from '@tanstack/react-query';
 
@@ -9,13 +9,13 @@ import { useMutation } from '@tanstack/react-query';
  * (Previously defined separately — now unified under this module.)
  */
 export function useRunSnapshotMutation() {
-    const invalidate = useInvalidateFireshotsData();
+    const invalidate = useInvalidateData();
 
     return useMutation({
         mutationFn: runSnapshot,
-        onSuccess: (res) => {
+        onSuccess: async (res) => {
             console.info('[Snapshot] Run completed successfully.');
-            invalidate();
+            await invalidate('summaries');
             return res;
         },
         onError: (err: any) => {

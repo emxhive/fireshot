@@ -1,7 +1,8 @@
 import * as React from 'react';
 import * as DrawerPrimitives from '@radix-ui/react-dialog';
 import { RiCloseLine } from '@remixicon/react';
-import { cn, focusRing } from '@/lib/utils';
+import { cn } from '@/lib/utils';
+import { focusRing } from '@/lib/constants';
 
 /* -----------------------------------------------------------------------------
  * Root + Trigger + Close

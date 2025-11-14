@@ -36,7 +36,7 @@ export async function createAccount(payload: Record<string, any>) {
 }
 
 export async function updateAccount(id: number, payload: Record<string, any>) {
-    return handle(api.post(`/api/shots/accounts/${id}`, payload).then((r) => r.data));
+    return handle(api.put(`/api/shots/accounts/${id}`, payload).then((r) => r.data));
 }
 
 export async function refreshTransactions(): Promise<{ status: string; message?: string }> {

@@ -2,7 +2,8 @@
 
 namespace Database\Seeders;
 
-use App\Models\Shots\AccountMeta;
+
+use App\Models\Shots\AssetAccount;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -13,8 +14,7 @@ class ShotsSnapshotsSeeder extends Seeder
     {
         echo "📸 Seeding Fireshots snapshot data...\n";
 
-        $assetAccounts = AccountMeta::select('id', 'currency_code')->get();
-
+        $assetAccounts = AssetAccount::select('id', 'currency_code')->get();
 
 
         if ($assetAccounts->isEmpty()) {

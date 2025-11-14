@@ -22,7 +22,6 @@ class AccountsClient extends FireflyClient
             ]);
             return [];
         }
-
         $data = $response->json('data') ?? [];
         $filtered = array_filter($data, fn($a) => ($a['attributes']['account_role'] ?? null) === $role->value);
 
@@ -39,38 +38,28 @@ class AccountsClient extends FireflyClient
         }, $filtered);
     }
 
+
     /**
-     * Normalize to the structure SnapshotService expects and keep strictly positive balances.
      * @throws ConnectionException
      */
-    public function getPositiveBalancesForDate(string $date): array
-    {
-        $accounts = $this->getAccounts();
-
-        $mapped = array_map(function (array $a) {
-            return [
-                'account_id' => (int)($a['id'] ?? 0),
-                'currency_code' => (string)($a['currency_code'] ?? 'NGN'),
-                'balance_raw' => (float)($a['balance'] ?? 0.0),
-            ];
-        }, $accounts);
-
-        return array_values(array_filter($mapped, fn($r) => ($r['balance_raw'] ?? 0) > 0));
-    }
-
-    // Convenience pass-throughs used by CreateAccountUseCase and UpdateAccountUseCase (preserve behavior)
     public function getAccount(int $id): ?array
     {
         $resp = $this->client()->get("/accounts/{$id}");
         return $resp->successful() ? $resp->json() : null;
     }
 
+    /**
+     * @throws ConnectionException
+     */
     public function createAccount(array $payload): ?array
     {
         $resp = $this->client()->post('/accounts', $payload);
         return $resp->successful() ? $resp->json() : null;
     }
 
+    /**
+     * @throws ConnectionException
+     */
     public function updateAccount(int $id, array $payload): ?array
     {
         $resp = $this->client()->put("/accounts/{$id}", $payload);

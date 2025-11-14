@@ -44,6 +44,6 @@ final readonly class TransactionsController
     public function refresh()
     {
         $this->transactions->refreshCache();
-        return ApiResponse::success(null, 'Transaction cache refreshed.', Response::HTTP_OK);
+        return ApiResponse::success(null, 'Transaction cache refreshed.');
     }
 }

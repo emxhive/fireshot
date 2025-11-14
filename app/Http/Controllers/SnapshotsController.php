@@ -2,13 +2,14 @@
 
 namespace App\Http\Controllers;
 
-use App\Domain\Snapshots\DTOs\SnapshotSummaryData;
+
 use App\Domain\Snapshots\Services\SnapshotComputationService;
 use App\Domain\Snapshots\Services\SnapshotService;
 use App\Shared\ApiResponse;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Throwable;
 
 final readonly class SnapshotsController
 {
@@ -26,7 +27,9 @@ final readonly class SnapshotsController
         return ApiResponse::success($snapshots);
     }
 
+
     /**
+     * @throws Throwable
      * @throws ConnectionException
      */
     public function run(Request $request)
