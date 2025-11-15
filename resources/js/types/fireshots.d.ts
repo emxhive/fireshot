@@ -24,9 +24,16 @@ interface SummaryRow {
     transactions: number;
 }
 
+interface LatestMeta {
+    sell_rate?: number;
+    buy_rate?: number;
+    buy_diff?: number;
+}
+
 interface SummaryResponse {
     status: 'success' | 'error';
-    data: SummaryRow[];
+    // New API shape: summaries array + latest snapshot meta
+    data: { summaries: SummaryRow[]; latest_meta?: LatestMeta };
 }
 
 /* ---------------------------------------------------------------------------
@@ -48,6 +55,7 @@ interface SnapshotTableProps {
     data: SummaryRow[];
     loading?: boolean;
     onSnapshotRun?: () => void;
+    latestMeta?: LatestMeta;
 }
 
 interface CompositionChartProps {

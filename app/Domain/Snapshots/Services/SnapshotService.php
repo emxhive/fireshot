@@ -11,10 +11,7 @@ use Throwable;
 final readonly class SnapshotService
 {
     public function __construct(
-        private SnapshotRepository     $snapRepo,
-        private AssetAccountRepository $assetRepo,
-
-    )
+        private SnapshotRepository $snapRepo, private AssetAccountRepository $assetRepo)
     {
     }
 
@@ -22,7 +19,7 @@ final readonly class SnapshotService
      * @throws ConnectionException
      * @throws Throwable
      */
-    public function run(string $date, float $sellRate): void
+    public function run(string $date, float $sellRate, float $buyRate): void
     {
 
         $accounts = $this->assetRepo->all();
@@ -33,7 +30,7 @@ final readonly class SnapshotService
         ])->all();
 
 
-        $this->snapRepo->saveSnapshot($balances, $date, $sellRate);
+        $this->snapRepo->saveSnapshot($balances, $date, $sellRate, $buyRate);
 
 
     }

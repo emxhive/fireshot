@@ -13,7 +13,10 @@ final readonly class SnapshotComputationService
     }
 
 
-    /**@return SnapshotSummaryData[] */
+    /**
+     * Build interval summaries and include latest snapshot meta (sell_rate, buy_rate, buy_diff).
+     * Returns structure: ['summaries' => SnapshotSummaryData[], 'latest_meta' => array|null]
+     */
     public function getIntervalSummaries(?int $limit = null): array
     {
         $headers = collect($this->repo->getHeaders($limit))->values();
@@ -50,7 +53,23 @@ final readonly class SnapshotComputationService
             $prev = $curr;
         }
 
-        return $out;
+        // Build latest meta from most recent header if available
+        $latest = $headers->last();
+        $latestMeta = null;
+        if ($latest) {
+            $sell = (float)$latest->sell_rate;
+            $buy = (float)($latest->buy_rate ?? 0);
+            $latestMeta = [
+                'sell_rate' => $sell,
+                'buy_rate'  => $buy,
+                'buy_diff'  => $sell - $buy,
+            ];
+        }
+
+        return [
+            'summaries' => $out,
+            'latest_meta' => $latestMeta,
+        ];
     }
 
 }

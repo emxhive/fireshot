@@ -1,6 +1,6 @@
-import { formatNumberInput, parseNumberInput } from '@/lib/utils';
+import { FigureInput } from '@/components/FigureInput';
 import { NumberInput, Select, SelectItem, TextInput } from '@tremor/react';
-import React, { useState } from 'react';
+import React from 'react';
 
 interface Props {
     data: Partial<Account> | null;
@@ -8,8 +8,6 @@ interface Props {
 }
 
 const AccountForm: React.FC<Props> = ({ data, onChange }) => {
-    const [displayValue, setDisplayValue] = useState('');
-
     return (
         <div className="space-y-6">
             <div>
@@ -32,21 +30,8 @@ const AccountForm: React.FC<Props> = ({ data, onChange }) => {
                 </div>
                 <div>
                     <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Balance</label>
-                    <TextInput
-                        placeholder="Balance"
-                        value={displayValue}
-                        onChange={(e) => {
-                            const val = e.target.value;
 
-                            // Parse the numeric value for internal state/backend
-                            const parsed = parseNumberInput(val);
-                            onChange('balance', isNaN(parsed) ? 0 : parsed);
-
-                            // Format for visible display
-                            setDisplayValue(formatNumberInput(parsed));
-                        }}
-                        className="mt-2"
-                    />
+                    <FigureInput placeholder="Balance" initialValue={data?.balance ?? 0} formChange={onChange} name={'balance'} />
                 </div>
             </div>
         </div>
@@ -54,4 +39,3 @@ const AccountForm: React.FC<Props> = ({ data, onChange }) => {
 };
 
 export default AccountForm;
-// <NumberInput placeholder="Balance" value={data?.balance ?? 0} onValueChange={(val) => onChange('balance', Number(val ?? 0))} className="mt-2" />;

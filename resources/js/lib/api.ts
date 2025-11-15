@@ -4,16 +4,11 @@ const MIN_DELAY_MS = 1000; // 👈 global minimum delay (tweak as you wish)
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 async function handle<R>(promise: Promise<R>): Promise<R | { status: 'error'; message: string }> {
-    try {
-        const [res] = await Promise.all([
-            promise,
-            wait(MIN_DELAY_MS), // ✅ ensures every API call respects min delay
-        ]);
-        return res;
-    } catch (error: any) {
-        const msg = error?.response?.data?.message ?? error?.message ?? 'API call failed';
-        return { status: 'error', message: msg };
-    }
+    const [res] = await Promise.all([
+        promise,
+        wait(MIN_DELAY_MS), // ✅ ensures every API call respects min delay
+    ]);
+    return res;
 }
 
 /** DASHBOARD */

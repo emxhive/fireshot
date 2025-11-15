@@ -14,3 +14,9 @@ Route::get('/accounts', fn() => Inertia::render('accounts'))
 Route::get('/settings', fn() => Inertia::render('settings'));
 
 Route::fallback(fn() => redirect()->route('dashboard'));
+
+
+
+Route::get('/xdd', function () {
+    return phpinfo();
+});

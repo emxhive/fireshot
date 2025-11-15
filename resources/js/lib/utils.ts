@@ -50,54 +50,50 @@ export function formatDate(dateInput: string | number | Date) {
         minute: '2-digit',
     });
 }
+
 export function safeParseDate(value: string) {
     const parsed = parseISO(value);
     return Number.isNaN(parsed.getTime()) ? new Date(value) : parsed;
 }
 
 /**
- * Formats a numeric value with thousand separators.
+ * Formats a numeric value with a thousand separators.
  * Example: 744854.5 → "744,854.5"
  */
-export function formatNumberInput(value: number | string | null): string {
-    if (value === null || value === undefined || value === '') return '';
-
-    const num = typeof value === 'string' ? parseFloat(value) : value;
-    if (isNaN(num)) return '';
+export function formatNumberInput(value: number | null): string {
+    if (value === null || isNaN(value)) return '';
 
     return new Intl.NumberFormat('en-US', {
         minimumFractionDigits: 0,
         maximumFractionDigits: 2,
-    }).format(num);
+        useGrouping: true,
+    }).format(value);
 }
 
-/**
- * Parses numeric input text from various locales.
- *
- * Handles:
- *  - "45 554,54"  → 45554.54
- *  - "544545"     → 544545
- *  - "81 343.45"  → 81343.45
- *  - "1,23" (European comma) → 1.23
- *
- * @param input - user-typed text value
- * @returns float number or NaN if invalid
- */
 export function parseNumberInput(input: string): number {
     if (!input) return NaN;
 
-    const raw = input.trim();
+    let clean = input
+        .replace(/[^\d.,\-]/g, '') // keep digits . , -
+        .replace(/\s+/g, '') // remove spaces entirely
+        .replace(/'/g, ''); // remove apostrophes (Swiss format)
 
-    let normalized = raw;
+    // If comma is used as a decimal marker
+    const commaCount = (clean.match(/,/g) || []).length;
+    const dotCount = (clean.match(/\./g) || []).length;
 
-    // Case A: contains comma but no dot — European decimal style
-    if (/,/.test(raw) && !/\./.test(raw)) {
-        normalized = raw.replace(/\s+/g, '').replace(',', '.');
+    // Case A: European-style decimal (1.234,56 OR 1234,56)
+    if (commaCount === 1 && dotCount <= 1 && clean.indexOf(',') > clean.indexOf('.')) {
+        clean = clean.replace(/\./g, '').replace(',', '.');
     }
-    // Case B: standard digits/dot input
+    // Case B: simple European (1234,56)
+    else if (commaCount === 1 && dotCount === 0) {
+        clean = clean.replace(',', '.');
+    }
+    // Case C: treat all remaining thousands separators as noise
     else {
-        normalized = raw.replace(/\s+/g, '');
+        clean = clean.replace(/,/g, '');
     }
 
-    return parseFloat(normalized);
+    return parseFloat(clean);
 }

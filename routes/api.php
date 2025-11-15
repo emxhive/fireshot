@@ -24,7 +24,8 @@ Route::prefix('shots')->group(function () {
         ->name('shots.accounts.create');
     Route::put('/accounts/{account}', [AccountsController::class, 'update'])
         ->name('shots.accounts.update');
-    Route::post('/accounts/sync', [AccountsController::class, 'sync'])
-        ->name('shots.accounts.sync');
+    Route::post('/accounts/bootstrap', [AccountsController::class, 'bootstrap'])
+        ->name('shots.accounts.bootstrap');
 
 });
+

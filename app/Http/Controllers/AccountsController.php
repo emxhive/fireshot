@@ -56,7 +56,7 @@ final readonly class AccountsController
     }
 
 
-    public function sync()
+    public function bootstrap()
     {
         $accounts = $this->accounts->getAll();
         return ApiResponse::success($accounts);

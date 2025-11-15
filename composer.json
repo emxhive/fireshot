@@ -10,13 +10,14 @@
     "license": "MIT",
     "require": {
         "php": "^8.2",
+        "ext-curl": "*",
         "inertiajs/inertia-laravel": "^2.0",
         "laravel/fortify": "^1.30",
         "laravel/framework": "^12.0",
         "laravel/tinker": "^2.10.1",
         "laravel/wayfinder": "^0.1.9",
-        "spatie/laravel-data": "^4.17",
-        "ext-curl": "*"
+        "opcodesio/log-viewer": "^3.21",
+        "spatie/laravel-data": "^4.17"
     },
     "require-dev": {
         "barryvdh/laravel-debugbar": "^3.16",

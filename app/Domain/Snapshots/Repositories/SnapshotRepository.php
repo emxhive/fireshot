@@ -23,16 +23,25 @@ final class SnapshotRepository
     /**
      * @throws Throwable
      */
-    public function saveSnapshot(array $balances, string $date, float $sellRate): void
+    public function saveSnapshot(array $balances, string $date, float $sellRate, float $buyRate): void
     {
-        DB::transaction(function () use ($balances, $date, $sellRate) {
+        $userId = 1;
+        DailySnapshotHeader::where('user_id', $userId)
+            ->where('snapshot_date', $date)
+            ->delete();
+
+        DB::transaction(function () use ($balances, $date, $sellRate, $buyRate, $userId) {
             $header = DailySnapshotHeader::create([
+                "user_id" => $userId,
+                "snapshot_at" => now(),
                 'snapshot_date' => $date,
                 'sell_rate' => $sellRate,
+                'buy_rate' => $buyRate,
             ]);
 
             foreach ($balances as $balance) {
                 BalanceSnapshot::create([
+                    "user_id" => $userId,
                     'header_id' => $header->id,
                     'account_id' => $balance['account_id'],
                     'currency_code' => $balance['currency_code'],
@@ -53,7 +62,9 @@ final class SnapshotRepository
 
         $usd = (float)($totals['USD'] ?? 0);
         $ngn = (float)($totals['NGN'] ?? 0);
-        $nav = $ngn + $usd * (float)$header->sell_rate;
+        // Use buy_rate for converting USD to NGN when computing NAV per requirements
+        $rate = (float)($header->buy_rate ?? $header->sell_rate ?? 0);
+        $nav = $ngn + $usd * $rate;
 
         return ['usd' => $usd, 'ngn' => $ngn, 'nav' => $nav];
     }

@@ -1,22 +1,18 @@
 import { ContentPlaceholder } from '@/components/ContentPlaceholder';
 import { useDashboardData } from '@/hooks/data/useDashboardData';
-import { useKpiMetrics } from '@/hooks/useKpiMetrics';
+import { useKpiMetrics } from '@/hooks/kpi/useKpiMetrics';
 import { Card, Grid, Select, SelectItem } from '@tremor/react';
 import { useState } from 'react';
 import CompositionChartSection from '../components/CompositionChartSection';
 import KpiCard from '../components/KpiCard';
 import LayoutShell from '../components/LayoutShell';
-import SnapshotSummaryTable from '../components/SnapshotSummaryTable';
+import SnapshotSummaryTable from '../components/snapshot/SnapshotSummaryTable';
 
 export default function Dashboard() {
     const [period, setPeriod] = useState<KpiPeriodOptions>('30d');
 
-    const { day30, week12, month12, loading } = useDashboardData();
+    const { day30, week12, month12, loading, latestMeta } = useDashboardData();
     const { kpiData, newest } = useKpiMetrics({ day30, week12, month12 }, period);
-
-    // handle snapshot re-fetch
-    const [reloadKey, setReloadKey] = useState(0);
-    const handleSnapshotRun = () => setReloadKey((k) => k + 1);
 
     return (
         <>
@@ -60,7 +56,7 @@ export default function Dashboard() {
                     </Grid>
 
                     {/* SNAPSHOT TABLE */}
-                    <SnapshotSummaryTable data={day30} loading={loading && day30.length === 0} onSnapshotRun={handleSnapshotRun} />
+                    <SnapshotSummaryTable data={day30} loading={loading && day30.length === 0} latestMeta={latestMeta} />
 
                     {/* COMPOSITION CHART */}
                     <CompositionChartSection weekly={week12} monthly={month12} loading={loading && (week12.length === 0 || month12.length === 0)} />

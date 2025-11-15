@@ -14,7 +14,7 @@ use Throwable;
 final readonly class SnapshotsController
 {
     public function __construct(
-        private SnapshotService $snapshots,
+        private SnapshotService            $snapshots,
         private SnapshotComputationService $compute,
     )
     {
@@ -23,8 +23,11 @@ final readonly class SnapshotsController
     public function summaries(Request $request)
     {
         $limit = (int)$request->query('limit', 12);
-        $snapshots = $this->compute->getIntervalSummaries($limit);
-        return ApiResponse::success($snapshots);
+        $data = $this->compute->getIntervalSummaries($limit);
+        return ApiResponse::success([
+            'summaries' => $data['summaries'],
+            'latest_meta' => $data['latest_meta'],
+        ]);
     }
 
 
@@ -34,10 +37,22 @@ final readonly class SnapshotsController
      */
     public function run(Request $request)
     {
-        $date = $request->input('date', now()->toDateString());
-        $sellRate = (float)$request->input('sell_rate', 1.0);
+        $input = $request->validate([
+            'snapshot_date' => 'required|date',
+            'sell_rate' => 'required|numeric',
+            'buy_diff' => 'nullable|numeric',
+        ]);
 
-        $this->snapshots->run($date, $sellRate);
+        $buyRate = $input['sell_rate'] - ($input['buy_diff'] ?? 0);
+
+
+        $this->snapshots->run(
+            $input['snapshot_date'],
+            $input['sell_rate'],
+            $buyRate
+        );
+
         return ApiResponse::success(null, 'Snapshot successfully created.', Response::HTTP_CREATED);
+
     }
 }
