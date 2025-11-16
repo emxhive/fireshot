@@ -1,24 +1,34 @@
-import { useAccountsQuery, useCreateAccountMutation, useUpdateAccountMutation } from '@/hooks/useAccountsQuery';
+import { useApiMutation } from '@/hooks/useApiMutation';
+import { useApiQuery } from '@/hooks/useApiQuery';
+import { createAccount, fetchAccounts, updateAccount } from '@/lib/api';
 
 /**
  * Handles Firefly/Fireshots account API I/O and data normalization.
  * Pure data layer — no UI or drawer logic.
  */
 export function useAccountsData() {
-    const { data: rawAccounts = [], isFetching, refetch } = useAccountsQuery();
-    const create = useCreateAccountMutation();
-    const update = useUpdateAccountMutation();
+    const accountsQuery = useApiQuery<Account[]>({
+        key: ['accounts'],
+        apiFn: fetchAccounts,
+    });
 
-    // 🔹 Normalize Firefly account data for frontend use
-    const accounts = rawAccounts.map((a: any) => ({
-        ...a,
-    }));
+    const create = useApiMutation<Record<string, unknown>, Record<string, unknown>>({
+        apiFn: createAccount,
+        invalidate: ['accounts'],
+    });
+
+    const update = useApiMutation<Record<string, unknown>, { id: number; payload: Record<string, unknown> }>({
+        apiFn: ({ id, payload }) => updateAccount(id, payload),
+        invalidate: ['accounts'],
+    });
+
+    const accounts = accountsQuery.data ?? [];
 
     return {
         accounts,
-        isFetching,
+        isFetching: accountsQuery.isFetching,
         create,
         update,
-        refetch,
+        refetch: accountsQuery.refetch,
     };
 }
