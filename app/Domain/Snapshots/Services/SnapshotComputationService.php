@@ -14,7 +14,7 @@ final readonly class SnapshotComputationService
 
 
     /**
-     * Build interval summaries and include latest snapshot meta (sell_rate, buy_rate, buy_diff).
+     * Build interval summaries and include the latest snapshot meta (sell_rate, buy_rate, buy_diff).
      * Returns structure: ['summaries' => SnapshotSummaryData[], 'latest_meta' => array|null]
      */
     public function getIntervalSummaries(?int $limit = null): array
@@ -53,7 +53,7 @@ final readonly class SnapshotComputationService
             $prev = $curr;
         }
 
-        // Build latest meta from most recent header if available
+        // Build the latest meta from the most recent header if available
         $latest = $headers->last();
         $latestMeta = null;
         if ($latest) {

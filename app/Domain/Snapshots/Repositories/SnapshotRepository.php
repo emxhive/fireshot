@@ -68,4 +68,61 @@ final class SnapshotRepository
 
         return ['usd' => $usd, 'ngn' => $ngn, 'nav' => $nav];
     }
+
+    public function listSnapshots(?int $limit = null): array
+    {
+        $query = DailySnapshotHeader::orderByDesc('snapshot_date');
+        if ($limit && $limit > 0) {
+            $query->limit($limit);
+        }
+        $headers = $query->get();
+
+        return $headers->map(function (DailySnapshotHeader $h) {
+            $nav = $this->computeNavForHeader($h->id);
+            $sell = (float)$h->sell_rate;
+            $buy = (float)($h->buy_rate ?? 0);
+            return [
+                'id' => (int)$h->id,
+                'snapshot_date' => $h->snapshot_date->toDateString(),
+                'sell_rate' => $sell,
+                'buy_rate' => $buy,
+                'buy_diff' => $sell - $buy,
+                'usd' => round($nav['usd'] ?? 0, 2),
+                'ngn' => round($nav['ngn'] ?? 0, 2),
+                'net_asset_value' => round($nav['nav'] ?? 0, 2),
+            ];
+        })->all();
+    }
+
+    public function getSnapshotAccounts(int $headerId): array
+    {
+        // Left join to enrich with account name and fee
+        $rows = BalanceSnapshot::query()
+            ->select([
+                'fireshots_balance_snapshots.account_id as account_id',
+                'fireshots_balance_snapshots.currency_code as currency_code',
+                'fireshots_balance_snapshots.balance_raw as balance_raw',
+                'fireshots_asset_accounts.name as account_name',
+                'fireshots_asset_accounts.fee as fee',
+            ])
+            ->leftJoin('fireshots_asset_accounts', 'fireshots_asset_accounts.id', '=', 'fireshots_balance_snapshots.account_id')
+            ->where('fireshots_balance_snapshots.header_id', $headerId)
+            ->orderBy('fireshots_asset_accounts.name')
+            ->get();
+
+        return $rows->map(function ($r) {
+            return [
+                'account_id' => (int)$r->account_id,
+                'account_name' => (string)($r->account_name ?? ''),
+                'currency_code' => (string)$r->currency_code,
+                'balance_raw' => (float)$r->balance_raw,
+                'fee' => $r->fee !== null ? (float)$r->fee : null,
+            ];
+        })->all();
+    }
+
+    public function deleteSnapshot(int $headerId): void
+    {
+        DailySnapshotHeader::whereKey($headerId)->delete();
+    }
 }

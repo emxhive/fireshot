@@ -8,6 +8,12 @@ Route::prefix('shots')->group(function () {
         ->name('shots.summaries');
     Route::post('/run', [SnapshotsController::class, 'run'])
         ->name('shots.run');
+    Route::get('/snapshots', [SnapshotsController::class, 'index'])
+        ->name('shots.snapshots.index');
+    Route::get('/snapshots/{snapshot}', [SnapshotsController::class, 'show'])
+        ->name('shots.snapshots.show');
+    Route::delete('/snapshots/{snapshot}', [SnapshotsController::class, 'destroy'])
+        ->name('shots.snapshots.destroy');
 
     // --- Transactions ---
     Route::get('/transactions', [TransactionsController::class, 'index'])

@@ -19,9 +19,15 @@ final readonly class SnapshotService
      * @throws ConnectionException
      * @throws Throwable
      */
-    public function run(string $date, float $sellRate, float $buyRate): void
+    public function run(string $date, float $sellRate, float $buyRate, ?array $overrideBalances = null): void
     {
+        // If override balances are provided, use them as-is (already normalized by controller)
+        if (is_array($overrideBalances)) {
+            $this->snapRepo->saveSnapshot($overrideBalances, $date, $sellRate, $buyRate);
+            return;
+        }
 
+        // Backwards-compatible default behavior: read balances and currencies from AssetAccountRepository
         $accounts = $this->assetRepo->all();
         $balances = $accounts->map(fn($a) => [
             'account_id' => (int)$a->id,
@@ -29,9 +35,6 @@ final readonly class SnapshotService
             'balance_raw' => (float)($a->balance ?? 0.0),
         ])->all();
 
-
         $this->snapRepo->saveSnapshot($balances, $date, $sellRate, $buyRate);
-
-
     }
 }
