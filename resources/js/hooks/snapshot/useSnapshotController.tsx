@@ -1,8 +1,22 @@
-import { useRunSnapshotMutation } from '@/hooks/useRunSnapshotMutation';
+import { useApiMutation } from '@/hooks/useApiMutation';
+import { runSnapshot } from '@/lib/api';
 import { useState } from 'react';
 
 export function useSnapshotController(latestMeta?: LatestMeta) {
-    const runSnapshotMutation = useRunSnapshotMutation();
+    const runSnapshotMutation = useApiMutation<Record<string, unknown>, {
+        snapshot_date: string;
+        sell_rate: number;
+        buy_diff?: number;
+    }>({
+        apiFn: runSnapshot,
+        invalidate: ['summaries'],
+        onSuccess: () => {
+            console.info('[Snapshot] Run completed successfully.');
+        },
+        onError: (err) => {
+            console.error('[Snapshot] Run failed:', err.message);
+        },
+    });
 
     const [open, setOpen] = useState(false);
 
@@ -25,7 +39,7 @@ export function useSnapshotController(latestMeta?: LatestMeta) {
         setOpen(false);
     };
 
-    const update = (key: keyof typeof fields, value: any) => {
+    const update = (key: keyof typeof fields, value: unknown) => {
         setFields((prev) => ({ ...prev, [key]: value }));
     };
 
