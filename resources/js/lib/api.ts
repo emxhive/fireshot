@@ -1,42 +1,39 @@
 import api from './axiosClient';
-import { apiRequestFromPromise } from './apiClient';
 
-type SummariesPayload = { summaries: SummaryRow[]; latest_meta?: LatestMeta };
+const MIN_DELAY_MS = 1000; // 👈 global minimum delay (tweak as you wish)
+const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-type AccountListPayload = Account[];
-type AccountMutationPayload = Record<string, unknown>;
-
-type SnapshotPayload = Record<string, unknown>;
-
-type TransactionsPayload = Record<string, unknown> & { message?: string };
+async function handle<R>(promise: Promise<R>): Promise<R | { status: 'error'; message: string }> {
+    const [res] = await Promise.all([
+        promise,
+        wait(MIN_DELAY_MS), // ✅ ensures every API call respects min delay
+    ]);
+    return res;
+}
 
 /** DASHBOARD */
 export async function getSummaries(limit?: number) {
     const query = limit ? `?limit=${limit}` : '';
-    return apiRequestFromPromise<SummariesPayload>(api.get(`/api/shots/summaries${query}`));
+    return handle(api.get(`/api/shots/summaries${query}`).then((r) => r.data));
 }
 
-export async function runSnapshot(payload: {
-    snapshot_date: string;
-    sell_rate: number;
-    buy_diff?: number;
-}) {
-    return apiRequestFromPromise<SnapshotPayload>(api.post('/api/shots/run', payload));
+export async function runSnapshot(payload: { snapshot_date: string; sell_rate: number; buy_diff?: number }) {
+    return handle(api.post('/api/shots/run', payload).then((r) => r.data));
 }
 
 /** ACCOUNTS */
 export async function fetchAccounts() {
-    return apiRequestFromPromise<AccountListPayload>(api.get('/api/shots/accounts'));
+    return handle(api.get('/api/shots/accounts').then((r) => r.data));
 }
 
-export async function createAccount(payload: Record<string, unknown>) {
-    return apiRequestFromPromise<AccountMutationPayload>(api.post('/api/shots/accounts/create', payload));
+export async function createAccount(payload: Record<string, any>) {
+    return handle(api.post('/api/shots/accounts/create', payload).then((r) => r.data));
 }
 
-export async function updateAccount(id: number, payload: Record<string, unknown>) {
-    return apiRequestFromPromise<AccountMutationPayload>(api.put(`/api/shots/accounts/${id}`, payload));
+export async function updateAccount(id: number, payload: Record<string, any>) {
+    return handle(api.put(`/api/shots/accounts/${id}`, payload).then((r) => r.data));
 }
 
-export async function refreshTransactions() {
-    return apiRequestFromPromise<TransactionsPayload>(api.post('/api/shots/transactions/refresh'));
+export async function refreshTransactions(): Promise<{ status: string; message?: string }> {
+    return handle(api.post('/api/shots/transactions/refresh').then((r) => r.data));
 }

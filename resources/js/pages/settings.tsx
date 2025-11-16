@@ -1,23 +1,12 @@
 import LayoutShell from '@/components/LayoutShell';
-import { useApiMutation } from '@/hooks/useApiMutation';
+import { useCacheClearMutation } from '@/hooks/useRefreshTransactionsMutation';
 import useToast from '@/hooks/useToast';
-import { refreshTransactions } from '@/lib/api';
 import { Button, Callout, Card, Text, Title } from '@tremor/react';
-import type { ReactNode } from 'react';
 
 export default function Settings() {
     const { toast, show } = useToast();
 
-    const transactions = useApiMutation<{ message?: string }, void>({
-        apiFn: () => refreshTransactions(),
-        invalidate: ['summaries'],
-        onSuccess: () => {
-            console.info(`[Cache] Cleared successfully.`);
-        },
-        onError: (err) => {
-            console.error(`[Cache] Failed to clear`, err.message);
-        },
-    });
+    const transactions = useCacheClearMutation();
 
     const cacheBlocks = [
         {
@@ -46,8 +35,8 @@ export default function Settings() {
                     <Button
                         onClick={() =>
                             hook.mutate(undefined, {
-                                onSuccess: (res) => show('success', res?.message ?? `Cleared  cache.`),
-                                onError: (err) => show('error', err.message ?? `Failed to clear cache.`),
+                                onSuccess: (res: any) => show('success', res?.message ?? `Cleared  cache.`),
+                                onError: (err: any) => show('error', err?.message ?? `Failed to clear cache.`),
                             })
                         }
                         disabled={hook.isPending}
@@ -67,4 +56,4 @@ export default function Settings() {
     );
 }
 
-Settings.layout = (page: ReactNode) => <LayoutShell children={page} />;
+Settings.layout = (page: any) => <LayoutShell children={page} />;
