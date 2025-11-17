@@ -1,22 +1,29 @@
 <?php
 
+use App\Http\Controllers\Web\AccountsPageController;
+use App\Http\Controllers\Web\DashboardPageController;
 use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
 
-Route::get('/', fn() => redirect()->route('dashboard'));
+/*
+|--------------------------------------------------------------------------
+| Web Routes
+|--------------------------------------------------------------------------
+*/
 
-Route::get('/dashboard', fn() => Inertia::render('dashboard'))
-    ->name('dashboard');
+// --- Application Pages ---
+Route::name('shots.')->group(function () {
 
-Route::get('/accounts', fn() => Inertia::render('accounts'))
-    ->name('accounts');
+    Route::get('/dashboard', DashboardPageController::class)->name('dashboard');
 
-Route::get('/settings', fn() => Inertia::render('settings'));
+    Route::get('/accounts', AccountsPageController::class)->name('accounts.index');
 
-Route::fallback(fn() => redirect()->route('dashboard'));
+    Route::inertia('/settings', 'settings')->name('settings');
 
-
-
-Route::get('/xdd', function () {
-    return phpinfo();
 });
+
+// --- Redirects & Fallbacks ---
+
+Route::get('/', fn() => redirect()->route('shots.dashboard'));
+
+// Any route not defined above also redirects to the dashboard
+Route::fallback(fn() => redirect()->route('shots.dashboard'));

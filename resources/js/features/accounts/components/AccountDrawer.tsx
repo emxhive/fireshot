@@ -5,44 +5,27 @@ import { AnimatePresence, motion } from 'framer-motion';
 import React from 'react';
 import AccountForm from './AccountForm';
 
-interface Props {
-    isOpen: boolean;
-    onOpenChange: (v: boolean) => void;
-    data: Partial<Account> | null;
-    isSaving: boolean;
-    onSave: () => void;
-    onSkip: () => void;
-    onChange: (key: keyof Account, value: any) => void;
-    queueIndex: number;
-    totalQueued: number;
-    editingAccount: Account | null;
-    saveStatus: 'success' | 'error' | 'idle';
-}
-
-const AccountDrawer: React.FC<Props> = ({
-    isOpen,
-    onOpenChange,
-    saveStatus,
-    data,
-    isSaving,
-    onSave,
-    onSkip,
-    onChange,
-    queueIndex,
-    totalQueued,
-    editingAccount,
-}) => (
-    <Drawer open={isOpen} onOpenChange={onOpenChange}>
+const AccountDrawer: React.FC<Props> = ({ editor, queue, form, isSaving, onSave, saveStatus }) => (
+    <Drawer
+        open={editor.isOpen}
+        onOpenChange={(open) => {
+            // We only care about closing from inside the drawer;
+            // opening is controlled externally via editor.open(...)
+            if (!open) {
+                editor.close();
+            }
+        }}
+    >
         <DrawerContent className="dark:bg-gray-925 overflow-x-hidden sm:max-w-lg">
             <DrawerHeader>
                 <DrawerTitle>
                     <div>
-                        {editingAccount?.id && editingAccount.id !== 0 ? 'Edit Account' : 'Add Account'}
-                        {totalQueued > 1 ? ` (${queueIndex + 1}/${totalQueued})` : ''}
+                        {editor.current?.id && editor.current.id !== 0 ? 'Edit Account' : 'Add Account'}
+                        {queue.hasNext ? ` (${queue.index + 1}/${queue.total})` : ''}
                     </div>
 
                     <span className="text-xs text-zinc-400">
-                        {editingAccount?.id && editingAccount.id !== 0 ? `Last Edited ${timeAgo(editingAccount?.updatedAt)}` : ''}
+                        {editor.current?.id && editor.current.id !== 0 ? `Last Edited ${timeAgo(editor.current?.updatedAt)}` : ''}
                     </span>
                 </DrawerTitle>
             </DrawerHeader>
@@ -50,25 +33,25 @@ const AccountDrawer: React.FC<Props> = ({
             <DrawerBody className="-mx-6 px-6 pb-10">
                 <AnimatePresence mode="wait">
                     <motion.div
-                        key={data?.id}
+                        key={form.data?.id}
                         initial={{ opacity: 0, x: 10 }}
                         animate={{ opacity: 1, x: 0 }}
                         exit={{ opacity: 0, x: -10 }}
                         transition={{ duration: 0.25 }}
                     >
-                        <AccountForm data={data} onChange={onChange} />
+                        <AccountForm data={form.data} onChange={form.onChange} />
                     </motion.div>
                 </AnimatePresence>
             </DrawerBody>
 
             <DrawerFooter className="dark:bg-gray-925 -mx-6 -mb-2 flex flex-col gap-3 bg-white px-6">
                 <div className="flex w-full justify-between gap-2">
-                    {totalQueued > 1 && (
-                        <Button variant="secondary" className="w-32" onClick={onSkip} disabled={isSaving}>
+                    {queue.total > 1 && (
+                        <Button variant="secondary" className="w-32" onClick={queue.next} disabled={isSaving}>
                             Skip
                         </Button>
                     )}
-                    <Button className="w-32" disabled={isSaving || !data?.name} onClick={onSave}>
+                    <Button className="w-32" disabled={isSaving || !form.data?.name} onClick={onSave}>
                         {isSaving ? 'Saving…' : 'Save'}
                     </Button>
                 </div>
@@ -96,3 +79,30 @@ const AccountDrawer: React.FC<Props> = ({
 );
 
 export default AccountDrawer;
+
+interface EditorStateLike {
+    isOpen: boolean;
+    current: Account | null;
+    close: () => void;
+}
+
+interface EditQueueLike {
+    index: number;
+    total: number;
+    next: () => void;
+    hasNext: boolean;
+}
+
+interface AccountFormAdapter {
+    data: Partial<Account> | null;
+    onChange: (key: keyof Account, value: any) => void;
+}
+
+interface Props {
+    editor: EditorStateLike;
+    queue: EditQueueLike;
+    form: AccountFormAdapter;
+    isSaving: boolean;
+    onSave: () => void;
+    saveStatus: 'success' | 'error' | 'idle';
+}

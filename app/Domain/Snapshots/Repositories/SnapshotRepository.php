@@ -19,6 +19,22 @@ final class SnapshotRepository
         return $query->get();
     }
 
+    /**
+     * Return the newest N daily snapshot headers in chronological order (oldest → newest).
+     * Avoids skip-based pagination by first taking a descending slice and then reversing it.
+     */
+    public function getLatestHeaders(int $limit): iterable
+    {
+        if ($limit <= 0) return collect();
+
+        $slice = DailySnapshotHeader::orderByDesc('snapshot_date')
+            ->limit($limit)
+            ->get();
+
+        // Reverse to chronological order
+        return $slice->sortBy('snapshot_date')->values();
+    }
+
 
     /**
      * @throws Throwable

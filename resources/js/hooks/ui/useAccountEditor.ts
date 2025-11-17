@@ -86,7 +86,7 @@ export function useAccountEditor() {
         setQueueIndex,
         editingAccount,
         setEditingAccount,
-        currentFormData,
+        data: currentFormData,
         setCurrentFormData,
         // actions
         openForEdit,

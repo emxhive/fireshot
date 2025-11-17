@@ -29,7 +29,7 @@ interface Props {
     accounts: Account[];
     rowSelection: any;
     setRowSelection: (val: any) => void;
-    onEdit: (account?: Account) => void;
+    onEdit: (account: Account) => void;
 }
 
 const AccountsTable: React.FC<Props> = ({ accounts, rowSelection, setRowSelection, onEdit }) => {

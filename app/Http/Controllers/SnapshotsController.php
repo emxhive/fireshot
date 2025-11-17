@@ -8,7 +8,8 @@ use App\Domain\Snapshots\Services\SnapshotService;
 use App\Domain\Snapshots\Repositories\SnapshotRepository;
 use App\Models\Shots\AssetAccount;
 use App\Models\Shots\DailySnapshotHeader;
-use App\Shared\ApiResponse;
+use App\Shared\CacheKeys;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -28,7 +29,7 @@ final readonly class SnapshotsController
     {
         $limit = (int)$request->query('limit', 12);
         $data = $this->compute->getIntervalSummaries($limit);
-        return ApiResponse::success([
+        return response()->json([
             'summaries' => $data['summaries'],
             'latest_meta' => $data['latest_meta'],
         ]);
@@ -78,7 +79,10 @@ final readonly class SnapshotsController
             $override
         );
 
-        return ApiResponse::success(null, 'Snapshot successfully created.', Response::HTTP_CREATED);
+        // Invalidate dashboard cache so it rebuilds on next load
+        Cache::forget(CacheKeys::DASHBOARD_SUMMARY);
+
+        return response()->json(['message' => 'Snapshot successfully created.'], Response::HTTP_CREATED);
 
     }
 
@@ -87,7 +91,7 @@ final readonly class SnapshotsController
     {
         $limit = (int)$request->query('limit', 50);
         $snapshots = $this->repo->listSnapshots($limit);
-        return ApiResponse::success($snapshots);
+        return response()->json($snapshots);
     }
 
     public function show(int $snapshot)
@@ -100,7 +104,7 @@ final readonly class SnapshotsController
 
         $accounts = $this->repo->getSnapshotAccounts($h->id);
 
-        return ApiResponse::success([
+        return response()->json([
             'id' => (int)$h->id,
             'snapshot_date' => $h->snapshot_date->toDateString(),
             'sell_rate' => $sell,
@@ -116,6 +120,6 @@ final readonly class SnapshotsController
     public function destroy(int $snapshot)
     {
         $this->repo->deleteSnapshot($snapshot);
-        return ApiResponse::success(null, 'Snapshot deleted.');
+        return response()->json(['message' => 'Snapshot deleted.']);
     }
 }

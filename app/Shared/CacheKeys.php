@@ -16,24 +16,7 @@ final class CacheKeys
     public const FIREFLY_KW_TX_META = 'firefly.tx.kw.meta';
     public const FIREFLY_KW_LOCK_REFRESH = 'lock:firefly.tx.kw.refresh';
 
-    // Summaries (by granularity)
-    public const SUMMARIES_DAY   = 'fireshots.summaries.day';
-    public const SUMMARIES_WEEK  = 'fireshots.summaries.week';
-    public const SUMMARIES_MONTH = 'fireshots.summaries.month';
+    public const DASHBOARD_SUMMARY = 'fireshots.dashboard.summary';
 
-    /* -------------------- Grouping -------------------- */
-    public const GROUP_ANALYTICS = [
-        self::SUMMARIES_DAY,
-        self::SUMMARIES_WEEK,
-        self::SUMMARIES_MONTH,
-    ];
 
-    public const GROUP_TRANSACTIONS = [
-        self::FIREFLY_KW_TX,
-        self::FIREFLY_KW_TX_META,
-    ];
-
-    public const GROUP_RECORDS = [
-        self::RECORDS,
-    ];
 }

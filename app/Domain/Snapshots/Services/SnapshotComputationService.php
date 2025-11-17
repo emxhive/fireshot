@@ -5,71 +5,84 @@ namespace App\Domain\Snapshots\Services;
 use App\Domain\Snapshots\DTOs\SnapshotSummaryData;
 use App\Domain\Snapshots\Repositories\SnapshotRepository;
 use App\Domain\Transactions\Services\TransactionService;
+use App\Domain\Snapshots\Support\SnapshotSeries;
+use Illuminate\Support\Collection;
 
 final readonly class SnapshotComputationService
 {
-    public function __construct(private SnapshotRepository $repo, private TransactionService $transactions)
-    {
-    }
+    public function __construct(
+        private SnapshotRepository $repo,
+        private TransactionService $transactions
+    ) {}
 
-
-    /**
-     * Build interval summaries and include the latest snapshot meta (sell_rate, buy_rate, buy_diff).
-     * Returns structure: ['summaries' => SnapshotSummaryData[], 'latest_meta' => array|null]
-     */
     public function getIntervalSummaries(?int $limit = null): array
     {
         $headers = collect($this->repo->getHeaders($limit))->values();
 
-        $out = [];
-        $prevNav = 0;
-        $prev = null;
-
-        foreach ($headers as $curr) {
-            if ($prev) {
-                $from = $prev->snapshot_date->toDateString();
-                $to = $curr->snapshot_date->toDateString();
-            } else {
-                $from = $to = $curr->snapshot_date->toDateString();
-            }
-
-            $txSum = $this->transactions->getSignedTotal($from, $to);
-            $navData = $this->repo->computeNavForHeader($curr->id);
-
-            $nav = $navData['nav'] ?? 0;
-            $vd = count($out) ? ($nav - $prevNav) - $txSum : 0;
-
-            $out[] = new SnapshotSummaryData(
-                from: $from,
-                to: $to,
-                usd: round($navData['usd'] ?? 0, 2),
-                ngn: round($navData['ngn'] ?? 0, 2),
-                netAssetValue: round($nav, 2),
-                valuationDelta: round($vd, 2),
-                transactions: round($txSum, 2),
-            );
-
-            $prevNav = $nav;
-            $prev = $curr;
-        }
-
-        // Build the latest meta from the most recent header if available
-        $latest = $headers->last();
-        $latestMeta = null;
-        if ($latest) {
-            $sell = (float)$latest->sell_rate;
-            $buy = (float)($latest->buy_rate ?? 0);
-            $latestMeta = [
-                'sell_rate' => $sell,
-                'buy_rate'  => $buy,
-                'buy_diff'  => $sell - $buy,
-            ];
-        }
+        $daily = SnapshotSeries::buildDailySeries(
+            $headers,
+            fn(string $from, string $to) => $this->transactions->getSignedTotal($from, $to),
+            fn(int $headerId) => $this->repo->computeNavForHeader($headerId)
+        );
 
         return [
-            'summaries' => $out,
-            'latest_meta' => $latestMeta,
+            'summaries'    => $daily,
+            'latest_meta'  => $this->buildLatestMeta(),
         ];
     }
 
+    /** @return SnapshotSummaryData[] */
+    public function getDailySummaries(int $days): array
+    {
+        $headers = collect($this->repo->getLatestHeaders($days + 1))->values();
+
+        $series = SnapshotSeries::buildDailySeries(
+            $headers,
+            fn(string $from, string $to) => $this->transactions->getSignedTotal($from, $to),
+            fn(int $headerId) => $this->repo->computeNavForHeader($headerId)
+        );
+
+        return count($series) > $days
+            ? array_slice($series, count($series) - $days)
+            : $series;
+    }
+
+    /** @return SnapshotSummaryData[] */
+    public function getWeeklySummaries(int $weeks): array
+    {
+        $daily = $this->getDailySummaries($weeks * 7 + 1);
+        return SnapshotSeries::aggregateSeries($daily, 'week', $weeks);
+    }
+
+    /** @return SnapshotSummaryData[] */
+    public function getMonthlySummaries(int $months): array
+    {
+        $daily = $this->getDailySummaries($months * 31 + 1);
+        return SnapshotSeries::aggregateSeries($daily, 'month', $months);
+    }
+
+    public function getDashboardPayload(): array
+    {
+        return [
+            'day30'      => $this->getDailySummaries(30),
+            'week12'     => $this->getWeeklySummaries(12),
+            'month12'    => $this->getMonthlySummaries(12),
+            'latestMeta' => $this->buildLatestMeta(),
+        ];
+    }
+
+    private function buildLatestMeta(): ?array
+    {
+        $latest = collect($this->repo->getLatestHeaders(1))->last();
+        if (!$latest) return null;
+
+        $sell = (float)$latest->sell_rate;
+        $buy  = (float)$latest->buy_rate;
+
+        return [
+            'sell_rate' => $sell,
+            'buy_rate'  => $buy,
+            'buy_diff'  => $sell - $buy,
+        ];
+    }
 }

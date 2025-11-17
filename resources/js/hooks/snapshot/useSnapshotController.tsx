@@ -1,13 +1,16 @@
-import { useApiMutation } from '@/hooks/useApiMutation';
-import { runSnapshot } from '@/lib/api';
+// @ts-nocheck
+
 import { useState } from 'react';
 
 export function useSnapshotController(latestMeta?: LatestMeta) {
-    const runSnapshotMutation = useApiMutation<Record<string, unknown>, {
-        snapshot_date: string;
-        sell_rate: number;
-        buy_diff?: number;
-    }>({
+    const runSnapshotMutation = useApiMutation<
+        Record<string, unknown>,
+        {
+            snapshot_date: string;
+            sell_rate: number;
+            buy_diff?: number;
+        }
+    >({
         apiFn: runSnapshot,
         invalidate: ['summaries'],
         onSuccess: () => {

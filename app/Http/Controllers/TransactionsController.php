@@ -4,7 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Domain\Transactions\DTOs\TransactionData;
 use App\Domain\Transactions\Services\TransactionService;
-use App\Shared\ApiResponse;
+use App\Shared\CacheKeys;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -27,7 +28,7 @@ final readonly class TransactionsController
         $end = now()->toDateString();
 
         $data = $this->transactions->getTransactions($start, $end);
-        return ApiResponse::success($data);
+        return response()->json($data);
     }
 
     public function summary(Request $request)
@@ -35,7 +36,7 @@ final readonly class TransactionsController
         $granularity = $request->query('granularity', 'month');
         $limit = (int)$request->query('limit', 12);
         $summary = $this->transactions->getPeriodTransactions($granularity, $limit);
-        return ApiResponse::success($summary);
+        return response()->json($summary);
     }
 
     /**
@@ -44,6 +45,7 @@ final readonly class TransactionsController
     public function refresh()
     {
         $this->transactions->refreshCache();
-        return ApiResponse::success(null, 'Transaction cache refreshed.');
+              Cache::forget(CacheKeys::DASHBOARD_SUMMARY);
+        return response()->json(['message' => 'Transaction cache refreshed.']);
     }
 }

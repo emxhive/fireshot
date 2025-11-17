@@ -1,152 +1,98 @@
-# 1) Ensure the KPI hooks folder exists
-mkdir -p resources/js/hooks/kpi
+#!/bin/bash
 
-# 2) Create / overwrite the useKpiViewModel hook
-cat > resources/js/hooks/kpi/useKpiViewModel.ts << 'EOF'
-import { useMemo } from 'react';
+# Create hooks directory if needed
+mkdir -p resources/js/features/accounts/hooks
 
-type Trend = 'positive' | 'negative' | 'neutral';
+###############################################
+# useEditorState.ts
+###############################################
+cat > resources/js/features/accounts/hooks/useEditorState.ts << 'EOF'
+import { useState } from 'react'
+import type { Account } from '../types'
 
-export interface KpiViewModel {
-    value: number;
-    delta: number;
-    pct: string;
-    chartTrend: Trend;
-    deltaTrend: Trend;
-    spark: { date: string; value: number }[];
+/**
+ * Handles only the UI editor state (open/close + current target)
+ * - No queue logic
+ * - No form logic
+ * - No backend logic
+ */
+export function useEditorState() {
+    const [isOpen, setIsOpen] = useState(false)
+    const [current, setCurrent] = useState<Account | null>(null)
+
+    /** Open editor for an account (existing or new) */
+    function open(account: Account) {
+        setCurrent(account)
+        setIsOpen(true)
+    }
+
+    /** Close editor */
+    function close() {
+        setIsOpen(false)
+        setCurrent(null)
+    }
+
+    return {
+        isOpen,
+        current,
+        open,
+        close,
+    }
 }
+EOF
 
-export function useKpiViewModel(data?: KpiCardDataSet): KpiViewModel {
-    return useMemo(() => {
-        const value = data?.value ?? 0;
-        const spark = data?.spark ?? [];
-        const recent = data?.recent;
+###############################################
+# useEditQueue.ts
+###############################################
+cat > resources/js/features/accounts/hooks/useEditQueue.ts << 'EOF'
+import { useState } from 'react'
+import type { Account } from '../types'
 
-        let delta = 0;
-        let pct = '—';
-        let deltaTrend: Trend = 'neutral';
+/**
+ * Pure queue management for bulk editing.
+ * - No editor logic
+ * - No form logic
+ * - No backend logic
+ */
+export function useEditQueue() {
+    const [queue, setQueue] = useState<Account[]>([])
+    const [index, setIndex] = useState(0)
 
-        if (recent && recent.length === 2) {
-            const [prev, curr] = recent;
+    const current = queue.length > 0 ? queue[index] : null
+    const hasNext = index + 1 < queue.length
 
-            delta = curr - prev;
+    /** Start a new queue */
+    function start(list: Account[]) {
+        if (list.length === 0) return
+        setQueue(list)
+        setIndex(0)
+    }
 
-            if (prev === 0) {
-                pct = curr === 0 ? '0%' : curr > 0 ? '∞' : '-∞';
-            } else {
-                const pctNum = (delta / Math.abs(prev)) * 100;
-                pct = `${pctNum.toFixed(2)}%`;
-            }
-
-            deltaTrend =
-                delta === 0 ? 'neutral' :
-                delta > 0 ? 'positive' :
-                'negative';
+    /** Move to the next account in queue */
+    function next() {
+        if (hasNext) {
+            setIndex(i => i + 1)
+        } else {
+            reset()
         }
+    }
 
-        const chartTrend: Trend =
-            value === 0 ? 'neutral' :
-            value > 0 ? 'positive' :
-            'negative';
+    /** Reset queue */
+    function reset() {
+        setQueue([])
+        setIndex(0)
+    }
 
-        return {
-            value,
-            delta,
-            pct,
-            chartTrend,
-            deltaTrend,
-            spark,
-        };
-    }, [data]);
+    return {
+        queue,
+        index,
+        current,
+        hasNext,
+        start,
+        next,
+        reset,
+    }
 }
 EOF
 
-# 3) Overwrite KpiCard.tsx with the new implementation
-cat > resources/js/components/KpiCard.tsx << 'EOF'
-import { formatNGN } from '@/lib/format';
-import { cn } from '@/lib/utils';
-import { Card, SparkAreaChart } from '@tremor/react';
-import { useKpiViewModel } from '@/hooks/kpi/useKpiViewModel';
-
-export default function KpiCard({ field, data, period }: KpiCardProps) {
-    const vm = useKpiViewModel(data);
-
-    const summary = [
-        {
-            name: field,
-            tickerSymbol: period.toUpperCase(),
-            value: formatNGN(vm.value),
-            change: (vm.delta >= 0 ? '+' : '') + vm.delta.toFixed(2),
-            percentageChange: vm.pct,
-            chartTrend: vm.chartTrend,
-            deltaTrend: vm.deltaTrend,
-        },
-    ];
-
-    return (
-        <dl className="grid grid-cols-1 gap-6">
-            {summary.map((item) => (
-                <Card key={item.name}>
-                    <dt className="text-tremor-default font-medium text-tremor-content-strong dark:text-dark-tremor-content-strong">
-                        {item.name} <span className="font-normal">({item.tickerSymbol})</span>
-                    </dt>
-
-                    <div className="mt-1 flex items-baseline justify-between">
-                        <dd
-                            className={cn(
-                                item.chartTrend === 'positive'
-                                    ? 'text-emerald-700 dark:text-emerald-500'
-                                    : item.chartTrend === 'negative'
-                                    ? 'text-red-700 dark:text-red-500'
-                                    : 'text-gray-600 dark:text-gray-400',
-                                'text-tremor-title font-semibold',
-                            )}
-                        >
-                            {item.value}
-                        </dd>
-                        <dd className="flex items-center space-x-1 text-tremor-default">
-                            <span
-                                className={cn(
-                                    item.deltaTrend === 'positive'
-                                        ? 'text-emerald-700 dark:text-emerald-500'
-                                        : item.deltaTrend === 'negative'
-                                        ? 'text-red-700 dark:text-red-500'
-                                        : 'text-gray-600 dark:text-gray-400',
-                                )}
-                            >
-                                {item.change}
-                            </span>
-                            <span
-                                className={cn(
-                                    item.deltaTrend === 'positive'
-                                        ? 'text-emerald-700 dark:text-emerald-500'
-                                        : item.deltaTrend === 'negative'
-                                        ? 'text-red-700 dark:text-red-500'
-                                        : 'text-gray-600 dark:text-gray-400',
-                                )}
-                            >
-                                ({item.percentageChange})
-                            </span>
-                        </dd>
-                    </div>
-
-                    <SparkAreaChart
-                        data={vm.spark}
-                        index="date"
-                        categories={['value']}
-                        showGradient={false}
-                        colors={
-                            item.chartTrend === 'positive'
-                                ? ['emerald']
-                                : item.chartTrend === 'negative'
-                                ? ['red']
-                                : ['gray']
-                        }
-                        className="mt-4 h-10 w-full"
-                    />
-                </Card>
-            ))}
-        </dl>
-    );
-}
-EOF
+echo "useEditorState and useEditQueue hooks created successfully."

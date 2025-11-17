@@ -6,6 +6,8 @@ use Illuminate\Http\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
 
 final class ApiResponse
+
+
 {
     public static function success(mixed $data = null, string $message = 'OK', int $status = Response::HTTP_OK): JsonResponse
     {

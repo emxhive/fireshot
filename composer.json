@@ -17,7 +17,8 @@
         "laravel/tinker": "^2.10.1",
         "laravel/wayfinder": "^0.1.9",
         "opcodesio/log-viewer": "^3.21",
-        "spatie/laravel-data": "^4.17"
+        "spatie/laravel-data": "^4.17",
+        "tightenco/ziggy": "*"
     },
     "require-dev": {
         "barryvdh/laravel-debugbar": "^3.16",

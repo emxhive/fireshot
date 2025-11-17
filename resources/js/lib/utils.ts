@@ -7,12 +7,12 @@ export function cn(...args: ClassValue[]) {
 }
 
 export function timeAgo(dateInput: string | Date): string {
-    console.log(dateInput, 'BeFORE ');
+
     const date = typeof dateInput === 'string' ? new Date(dateInput) : dateInput;
     if (isNaN(date.getTime())) return 'Invalid date';
 
     const now = new Date();
-    console.log(date, now, 'AFTER ');
+
     const diff = Math.floor((now.getTime() - date.getTime()) / 1000); // seconds
 
     if (diff < 0) return 'In the future';

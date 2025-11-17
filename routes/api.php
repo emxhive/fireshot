@@ -1,37 +1,48 @@
 <?php
 
-use App\Http\Controllers\{AccountsController, SnapshotsController, TransactionsController};
+use App\Http\Controllers\{AccountsApiController, SnapshotsController, TransactionsController};
+use Illuminate\Support\Facades\Route;
 
-Route::prefix('shots')->group(function () {
+/*
+|--------------------------------------------------------------------------
+| API Routes
+|--------------------------------------------------------------------------
+
+*/
+
+Route::prefix('shots')->name('shots.')->group(function () {
+
     // --- Snapshots ---
-    Route::get('/summaries', [SnapshotsController::class, 'summaries'])
-        ->name('shots.summaries');
-    Route::post('/run', [SnapshotsController::class, 'run'])
-        ->name('shots.run');
-    Route::get('/snapshots', [SnapshotsController::class, 'index'])
-        ->name('shots.snapshots.index');
-    Route::get('/snapshots/{snapshot}', [SnapshotsController::class, 'show'])
-        ->name('shots.snapshots.show');
-    Route::delete('/snapshots/{snapshot}', [SnapshotsController::class, 'destroy'])
-        ->name('shots.snapshots.destroy');
+    Route::controller(SnapshotsController::class)->group(function () {
+        // Routes at the root of /shots
+        Route::get('/summaries', 'summaries')->name('summaries');
+        Route::post('/run', 'run')->name('run');
+
+        // Routes under /shots/snapshots
+        Route::prefix('snapshots')->name('snapshots.')->group(function () {
+            Route::get('/', 'index')->name('index');
+            Route::get('/{snapshot}', 'show')->name('show');
+            Route::delete('/{snapshot}', 'destroy')->name('destroy');
+        });
+    });
 
     // --- Transactions ---
-    Route::get('/transactions', [TransactionsController::class, 'index'])
-        ->name('shots.transactions.index');
-    Route::get('/transactions/summary', [TransactionsController::class, 'summary'])
-        ->name('shots.transactions.summary');
-    Route::post('/transactions/refresh', [TransactionsController::class, 'refresh'])
-        ->name('shots.transactions.refresh');
+    Route::controller(TransactionsController::class)
+        ->prefix('transactions')
+        ->name('transactions.')
+        ->group(function () {
+            Route::get('/', 'index')->name('index');
+            Route::get('/summary', 'summary')->name('summary');
+            Route::post('/refresh', 'refresh')->name('refresh');
+        });
 
     // --- Accounts ---
-    Route::get('/accounts', [AccountsController::class, 'index'])
-        ->name('shots.accounts.index');
-    Route::post('/accounts/create', [AccountsController::class, 'store'])
-        ->name('shots.accounts.create');
-    Route::put('/accounts/{account}', [AccountsController::class, 'update'])
-        ->name('shots.accounts.update');
-    Route::post('/accounts/bootstrap', [AccountsController::class, 'bootstrap'])
-        ->name('shots.accounts.bootstrap');
-
+    Route::controller(AccountsApiController::class)
+        ->prefix('accounts')
+        ->name('accounts.')
+        ->group(function () {
+            Route::post('/create', 'store')->name('create');
+            Route::put('/{account}', 'update')->name('update');
+            Route::post('/bootstrap', 'bootstrap')->name('bootstrap');
+        });
 });
-

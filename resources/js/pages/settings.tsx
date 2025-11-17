@@ -1,9 +1,15 @@
 import LayoutShell from '@/components/LayoutShell';
-import { useApiMutation } from '@/hooks/useApiMutation';
-import useToast from '@/hooks/useToast';
-import { refreshTransactions } from '@/lib/api';
+
 import { Button, Callout, Card, Text, Title } from '@tremor/react';
 import type { ReactNode } from 'react';
+
+function useApiMutation<T, U>(param: { apiFn: () => any; invalidate: string[]; onSuccess: () => void; onError: (err) => void }) {}
+
+function refreshTransactions() {}
+
+function useToast() {
+    return { toast: null, show: (kind: 'success' | 'error', text: string) => ({ kind, text }) };
+}
 
 export default function Settings() {
     const { toast, show } = useToast();

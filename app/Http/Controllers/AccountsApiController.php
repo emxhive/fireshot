@@ -4,11 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Domain\Accounts\DTOs\AssetAccountData;
 use App\Domain\Accounts\Services\AssetAccountService;
-use App\Shared\ApiResponse;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 use Symfony\Component\HttpFoundation\Response;
 
-final readonly class AccountsController
+final readonly class AccountsApiController
 {
     public function __construct(
         private AssetAccountService $accounts,
@@ -16,12 +16,6 @@ final readonly class AccountsController
     {
     }
 
-
-    public function index(Request $request)
-    {
-        $accounts = $this->accounts->getAll();
-        return ApiResponse::success($accounts);
-    }
 
 
     public function store(Request $request)
@@ -36,7 +30,7 @@ final readonly class AccountsController
         );
         $created = $this->accounts->create($dto);
 
-        return ApiResponse::success($created, 'Account created successfully', Response::HTTP_CREATED);
+        return response()->json($created, Response::HTTP_CREATED);
     }
 
 
@@ -52,13 +46,13 @@ final readonly class AccountsController
         );
         $updated = $this->accounts->update($id, $dto);
 
-        return ApiResponse::success($updated, 'Account updated successfully');
+        return response()->json($updated);
     }
 
 
     public function bootstrap()
     {
         $accounts = $this->accounts->getAll();
-        return ApiResponse::success($accounts);
+        return response()->json($accounts);
     }
 }
